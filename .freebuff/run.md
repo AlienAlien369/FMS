@@ -1,11 +1,18 @@
-# FMS Preview — How to Run
+# FMS Preview Run Doc
 
-## Reproduce uncommitted artifacts
-No special setup needed — `preview.html` is a self-contained standalone HTML file with all CSS inline.
+## How to reproduce
+- The `preview.html` file at the workspace root is the standalone landing page.
+- No build or dependency install needed — it's a single static HTML file.
 
-## Run the server
-No server needed — the file is served directly by the Freebuff preview system via `register_preview` with `htmlPath`.
+## How to run
+- No server needed. Freebuff serves `preview.html` directly via `register_preview` with `htmlPath`.
 
-To re-register manually if the preview stops:
-1. Open the Preview tab in the thread.
-2. The agent calls `register_preview` with `htmlPath` pointing to `preview.html` at the workspace root.
+## Live Deployments
+
+| Service | URL | Platform |
+|---------|-----|----------|
+| 🌐 Web Frontend | https://fms-web-lakshyas-projects-c97e54f6.vercel.app | Vercel |
+| ⚙️ API Backend | https://fms-api-dfcb.onrender.com | Render (Docker) |
+| 🐘 PostgreSQL | Neon misty-sunset-31089713 | Neon Serverless |
+| 🍃 MongoDB | Atlas fms-cluster.9noel7m.mongodb.net | MongoDB M0 Free |
+| 📦 GitHub | https://github.com/AlienAlien369/FMS | GitHub |

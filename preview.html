@@ -3,421 +3,515 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FMS — RGBSI Fleet Management SaaS</title>
+  <title>RGBSI Fleet Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    :root {
-      --primary: #1a73e8;
-      --primary-dark: #1557b0;
-      --accent: #00c853;
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #242733;
-      --text: #e8eaed;
-      --muted: #9aa0a6;
-      --border: #3c4043;
-      --danger: #ea4335;
-      --warning: #fbbc04;
-      --gradient: linear-gradient(135deg, #1a73e8, #00c853);
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* NAV */
-    nav {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 40px; background: var(--surface);
-      border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
-    }
-    .logo { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 700; }
-    .logo-icon {
-      width: 36px; height: 36px; background: var(--gradient); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center; font-size: 18px;
-    }
-    .nav-links { display: flex; gap: 24px; }
-    .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
-    .nav-links a:hover { color: var(--text); }
-    .nav-actions { display: flex; gap: 12px; align-items: center; }
-    .btn {
-      padding: 8px 20px; border-radius: 6px; font-size: 14px; font-weight: 600;
-      cursor: pointer; border: none; transition: all .2s;
-    }
-    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost:hover { background: var(--surface2); }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-accent { background: var(--accent); color: #000; }
-    .btn-accent:hover { background: #00b248; }
-    .btn-lg { padding: 12px 32px; font-size: 16px; border-radius: 8px; }
-
-    /* HERO */
-    .hero {
-      text-align: center; padding: 80px 40px 60px;
-      background: radial-gradient(ellipse at top, rgba(26,115,232,0.15) 0%, transparent 60%);
-    }
-    .hero h1 { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
-    .hero h1 span { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hero p { font-size: 20px; color: var(--muted); max-width: 680px; margin: 0 auto 32px; }
-    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    .badge {
-      display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
-      background: rgba(0,200,83,0.15); color: var(--accent); margin-bottom: 20px;
-    }
-
-    /* STATS */
-    .stats {
-      display: flex; justify-content: center; gap: 48px; padding: 40px;
-      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-    }
-    .stat { text-align: center; }
-    .stat-val { font-size: 36px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
-
-    /* SECTORS */
-    .section { padding: 60px 40px; max-width: 1200px; margin: 0 auto; }
-    .section-title { font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 12px; }
-    .section-sub { text-align: center; color: var(--muted); margin-bottom: 40px; font-size: 16px; }
-    .sectors-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-    }
-    .sector-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 24px; transition: all .25s; cursor: pointer;
-    }
-    .sector-card:hover { border-color: var(--primary); transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(26,115,232,0.15); }
-    .sector-icon { font-size: 32px; margin-bottom: 12px; }
-    .sector-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-    .sector-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
-    .sector-phase { font-size: 11px; color: var(--accent); margin-top: 10px; font-weight: 600; }
-
-    /* FEATURES */
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-    .feature-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 28px; transition: all .25s;
-    }
-    .feature-card:hover { border-color: var(--primary); }
-    .feature-icon { font-size: 28px; margin-bottom: 12px; }
-    .feature-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
-
-    /* UAT ENVIRONMENTS */
-    .env-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 32px; }
-    .env-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 20px; display: flex; flex-direction: column; gap: 8px;
-    }
-    .env-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-    .env-url { font-size: 14px; font-family: 'Cascadia Code', 'Fira Code', monospace; color: var(--primary);
-      word-break: break-all; }
-    .env-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; width: fit-content;
-      background: rgba(26,115,232,0.15); color: var(--primary); font-weight: 600; }
-
-    /* CREDENTIALS TABLE */
-    .cred-table {
-      width: 100%; border-collapse: collapse; margin-top: 24px;
-      background: var(--surface); border-radius: 12px; overflow: hidden;
-    }
-    .cred-table th { background: var(--surface2); padding: 12px 16px; text-align: left;
-      font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-    .cred-table td { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 14px; }
-    .cred-table code { background: var(--surface2); padding: 2px 8px; border-radius: 4px; font-size: 13px; }
-
-    /* ARCHITECTURE */
-    .arch-block {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 24px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px;
-    }
-    .arch-icon { font-size: 28px; flex-shrink: 0; }
-    .arch-title { font-size: 16px; font-weight: 700; }
-    .arch-tech { font-size: 13px; color: var(--muted); margin-top: 2px; }
-
-    /* FOOTER */
-    footer {
-      text-align: center; padding: 40px; border-top: 1px solid var(--border);
-      color: var(--muted); font-size: 13px;
-    }
-
-    /* ANIMATIONS */
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .animate { animation: fadeUp 0.6s ease-out forwards; }
-    .delay-1 { animation-delay: 0.1s; opacity: 0; }
-    .delay-2 { animation-delay: 0.2s; opacity: 0; }
-    .delay-3 { animation-delay: 0.3s; opacity: 0; }
-
-    /* PULSE DOT */
-    .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
-      margin-right: 6px; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    :root{--p:#2563eb;--pd:#1d4ed8;--pl:#3b82f6;--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--t1:#f8fafc;--t2:#94a3b8;--t3:#64748b;--bl:#334155;--ok:#10b981;--er:#ef4444;--wn:#f59e0b;--ac:#6366f1;--red:#dc2626;--red2:#b91c1c}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow:hidden}
+    /* Login */
+    .login-page{display:flex;min-height:100vh}
+    .login-left{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;background:linear-gradient(135deg,#1e3a8a,#2563eb);position:relative;overflow:hidden}
+    .login-left::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.05),transparent 60%);animation:pulse 8s ease-in-out infinite}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:.8}}
+    .login-right{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px;background:var(--bg)}
+    .login-ctr{max-width:420px;width:100%}
+    .login-hdr h1{font-size:28px;font-weight:700;margin-bottom:8px}
+    .login-hdr p{color:var(--t2);font-size:15px;margin-bottom:40px}
+    /* Forms */
+    .fg{margin-bottom:16px}
+    .fg label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:6px}
+    .fg label .req{color:var(--er)}
+    .fg input,.fg select,.fg textarea{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--bl);border-radius:8px;color:var(--t1);font-size:14px;font-family:inherit;outline:none;transition:border .2s}
+    .fg input:focus,.fg select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+    .fg select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+    .fg select option{background:var(--bg2)}
+    .fg textarea{resize:vertical;min-height:80px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    /* Buttons */
+    .btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+    .btn-p{background:var(--red);color:#fff}.btn-p:hover{background:var(--red2)}
+    .btn-o{background:transparent;border:1px solid var(--bl);color:var(--t2)}.btn-o:hover{border-color:var(--t2)}
+    .btn-s{padding:8px 16px;font-size:13px;border-radius:6px}
+    .btn-g{background:var(--ok);color:#fff}.btn-g:hover{opacity:.9}
+    .err{display:none;padding:12px 16px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:var(--er);font-size:14px;margin-bottom:16px}
+    .api-st{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border-radius:8px;border:1px solid var(--bl);font-size:13px;color:var(--t2);margin-bottom:16px}
+    .api-st .dt{width:8px;height:8px;border-radius:50%;background:var(--er)}.api-st .dt.on{background:var(--ok)}
+    .demo{margin-top:24px;padding:16px;background:var(--bg2);border-radius:10px;border:1px solid var(--bl)}
+    .demo h3{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:10px}
+    .cr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:12px}.cr:last-child{border-bottom:none}
+    .cr .tn{color:var(--t3)}.cr .em{color:var(--p);font-weight:500;cursor:pointer}.cr .em:hover{text-decoration:underline}
+    /* App Layout */
+    .app{display:none;height:100vh}.app.on{display:flex}
+    .sb{width:260px;background:var(--bg);border-right:1px solid var(--bl);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+    .sb-hd{padding:16px;border-bottom:1px solid var(--bl)}
+    .sb-br{display:flex;align-items:center;gap:8px;margin-bottom:10px}.sb-br .lg{font-size:22px}.sb-br .nm{font-size:15px;font-weight:700}
+    .tn-p{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.25);border-radius:6px;font-size:11px;color:var(--pl);font-weight:600;width:100%}
+    .sb-nv{flex:1;padding:8px;overflow-y:auto}
+    .ns{margin-bottom:4px}
+    .nst{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px 3px}
+    .ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .12s;text-decoration:none;margin-bottom:1px}
+    .ni:hover{background:rgba(37,99,235,.08);color:var(--t1)}
+    .ni.act{background:rgba(37,99,235,.15);color:var(--pl);font-weight:600}
+    .ni .ic{width:18px;text-align:center;font-size:14px}
+    .sb-ft{padding:12px 16px;border-top:1px solid var(--bl)}
+    .sb-u{display:flex;align-items:center;gap:8px}
+    .sb-av{width:32px;height:32px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+    .sb-ui{flex:1;min-width:0}.sb-un{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sb-ur{font-size:10px;color:var(--t3)}
+    .lo{padding:5px 10px;background:transparent;border:1px solid var(--bl);border-radius:5px;color:var(--t3);font-size:10px;cursor:pointer;font-family:inherit}.lo:hover{border-color:var(--er);color:var(--er)}
+    .mc{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    .tb{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:var(--bg2);border-bottom:1px solid var(--bl);flex-shrink:0}
+    .pg-t{font-size:18px;font-weight:700}.pg-b{font-size:12px;color:var(--t3)}
+    .ct{flex:1;overflow-y:auto;padding:24px}
+    /* Tables */
+    .tb-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+    .tb-bar input,.tb-bar select{padding:8px 12px;background:var(--bg3);border:1px solid var(--bl);border-radius:6px;color:var(--t1);font-size:12px;font-family:inherit;outline:none}
+    .tb-bar input:focus{border-color:var(--p)}
+    .dt-t{width:100%;border-collapse:collapse;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--bl);font-size:13px}
+    .dt-t th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);background:rgba(30,41,59,.6);border-bottom:1px solid var(--bl)}
+    .dt-t td{padding:10px 16px;border-bottom:1px solid rgba(51,65,85,.3)}
+    .dt-t tr:hover td{background:rgba(37,99,235,.03)}
+    .sb2{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+    .sb2.ok{background:rgba(16,185,129,.15);color:var(--ok)}.sb2.wn{background:rgba(245,158,11,.15);color:var(--wn)}.sb2.er{background:rgba(239,68,68,.15);color:var(--er)}
+    .sd{width:5px;height:5px;border-radius:50%;background:currentColor}
+    .sp{display:inline-block;width:14px;height:14px;border:2px solid var(--bl);border-top-color:var(--p);border-radius:50%;animation:spi .6s linear infinite}
+    @keyframes spi{to{transform:rotate(360deg)}}
+    .pag{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:12px;color:var(--t3)}
+    /* Stats */
+    .sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .sc{background:var(--bg2);border:1px solid var(--bl);border-radius:10px;padding:16px}
+    .sc .si{font-size:20px;margin-bottom:8px}.sc .sv{font-size:24px;font-weight:800;margin-bottom:2px}.sc .sl{font-size:11px;color:var(--t2)}
+    .st{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+    /* Modal */
+    .modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+    .modal-bg.on{display:flex}
+    .modal{background:var(--bg2);border:1px solid var(--bl);border-radius:12px;width:700px;max-width:95vw;max-height:90vh;overflow-y:auto}
+    .modal-hd{padding:20px 24px;border-bottom:1px solid var(--bl);display:flex;justify-content:space-between;align-items:center}
+    .modal-hd h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .modal-hd .close{background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;padding:4px}.modal-hd .close:hover{color:var(--t1)}
+    .modal-bd{padding:24px}
+    .modal-ft{padding:16px 24px;border-top:1px solid var(--bl);display:flex;gap:8px;justify-content:flex-end}
+    /* Permission Matrix */
+    .perm-tbl{width:100%;border-collapse:collapse;font-size:13px}
+    .perm-tbl th{padding:10px 12px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:#0f172a;border:1px solid var(--bl)}
+    .perm-tbl th:first-child{text-align:left;min-width:200px}
+    .perm-tbl td{padding:8px 12px;text-align:center;border-bottom:1px solid rgba(51,65,85,.3)}
+    .perm-tbl td:first-child{text-align:left;font-weight:500}
+    .perm-tbl tr:hover td{background:rgba(37,99,235,.03)}
+    .perm-tbl input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--p)}
+    /* Toggle */
+    .toggle{position:relative;width:36px;height:20px;cursor:pointer;display:inline-block}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle .sl{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg3);border-radius:10px;transition:.3s}
+    .toggle .sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle input:checked+.sl{background:var(--ok)}.toggle input:checked+.sl::before{transform:translateX(16px)}
+    /* Settings Cards */
+    .set-card{background:var(--bg2);border:1px solid var(--bl);border-radius:10px;padding:20px;margin-bottom:16px}
+    .set-card h3{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+    .set-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(51,65,85,.3)}.set-row:last-child{border-bottom:none}
+    .set-row .label{font-size:13px;font-weight:500}.set-row .desc{font-size:11px;color:var(--t3);margin-top:1px}
+    .score{display:flex;align-items:center;gap:6px}
+    .score-trk{width:50px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}.score-fl{height:100%;border-radius:2px}
+    .pg-e{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;color:var(--t3)}.pg-e .ic{font-size:40px;margin-bottom:12px}.pg-e .ti{font-size:16px;font-weight:600;color:var(--t2);margin-bottom:6px}.pg-e .ds{font-size:13px;text-align:center;max-width:400px}
+    .empty{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--t3);font-size:13px}
+    .badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+    @media(max-width:768px){.login-left{display:none}.sb{width:56px}.sb .ni span,.sb .tn-p span:last-child,.sb-br .nm,.sb-ui,.nst{display:none}.sg,.form-row{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <nav>
-    <div class="logo">
-      <div class="logo-icon">🚀</div>
-      <span>FMS</span>
+<!-- ═══════ LOGIN ═══════ -->
+<div class="login-page" id="loginPage">
+  <div class="login-left">
+    <div style="position:relative;text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">🚛</div>
+      <div style="font-size:32px;font-weight:800;margin-bottom:8px">RGBSI Fleet Management</div>
+      <div style="font-size:16px;color:rgba(255,255,255,.8);margin-bottom:40px">Multi-Tenant SaaS Platform</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:360px">
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">📡</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Real-Time Telemetry</div></div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">🗺️</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Live Fleet Map</div></div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">📊</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Analytics & Reports</div></div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">🔒</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Multi-Tenant Security</div></div>
+      </div>
     </div>
-    <div class="nav-links">
-      <a href="#sectors">Sectors</a>
-      <a href="#features">Features</a>
-      <a href="#architecture">Architecture</a>
-      <a href="#uat">UAT</a>
-      <a href="#credentials">Demo Login</a>
+  </div>
+  <div class="login-right">
+    <div class="login-ctr">
+      <div class="login-hdr"><h1>Welcome back</h1><p>Sign in to your fleet dashboard</p></div>
+      <div class="api-st"><div class="dt" id="apiDot"></div><span id="apiSt">Checking API...</span></div>
+      <div class="err" id="errMsg"></div>
+      <form id="loginForm" onsubmit="doLogin(event)">
+        <div class="fg"><label>Email Address <span class="req">*</span></label><input type="email" id="email" placeholder="admin@acme-logistics.com" required></div>
+        <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="password" placeholder="Enter your password" required></div>
+        <div class="fg"><label>Tenant</label><select id="tenant"><option value="">Auto-detect from email</option><option value="acme-logistics">Acme Logistics Corp (India)</option><option value="saferide-taxi">SafeRide Taxi Services (USA)</option><option value="gulf-mining">Gulf Mining Group (Saudi Arabia)</option></select></div>
+        <button type="submit" class="btn btn-p" id="loginBtn" style="width:100%;padding:12px;margin-top:8px">Sign In</button>
+      </form>
+      <div class="demo"><h3>🔑 Demo Credentials</h3>
+        <div class="cr"><span class="tn">🇮🇳 Acme Logistics</span><span class="em" onclick="fill('admin@acme-logistics.com','Admin@123','acme-logistics')">admin@acme-logistics.com</span></div>
+        <div class="cr"><span class="tn">🇺🇸 SafeRide Taxi</span><span class="em" onclick="fill('admin@saferide-taxi.com','Admin@123','saferide-taxi')">admin@saferide-taxi.com</span></div>
+        <div class="cr"><span class="tn">🇸🇦 Gulf Mining</span><span class="em" onclick="fill('admin@gulf-mining.com','Admin@123','gulf-mining')">admin@gulf-mining.com</span></div>
+      </div>
     </div>
-    <div class="nav-actions">
-      <button class="btn btn-ghost" onclick="document.getElementById('uat').scrollIntoView({behavior:'smooth'})">UAT Environments</button>
-      <button class="btn btn-primary" onclick="document.getElementById('credentials').scrollIntoView({behavior:'smooth'})">Start Free Trial</button>
-    </div>
-  </nav>
+  </div>
+</div>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="badge animate"><span class="pulse"></span>Multi-Tenant SaaS Platform</div>
-    <h1 class="animate delay-1">RGBSI <span>Fleet Management</span><br>System</h1>
-    <p class="animate delay-2">White-label, multi-country fleet intelligence serving 8 business sectors. Dynamic modules, real-time telemetry, and configurable everything.</p>
-    <div class="hero-actions animate delay-3">
-      <button class="btn btn-accent btn-lg" onclick="document.getElementById('credentials').scrollIntoView({behavior:'smooth'})">🚀 Start Free Trial</button>
-      <button class="btn btn-ghost btn-lg" onclick="document.getElementById('sectors').scrollIntoView({behavior:'smooth'})">Explore Sectors →</button>
-    </div>
-  </section>
+<!-- ═══════ APP ═══════ -->
+<div class="app" id="appLayout">
+  <aside class="sb">
+    <div class="sb-hd"><div class="sb-br"><span class="lg">🚛</span><span class="nm">FMS</span></div><div class="tn-p"><span>🏢</span> <span id="sbT">—</span></div></div>
+    <nav class="sb-nv" id="sbN"></nav>
+    <div class="sb-ft"><div class="sb-u"><div class="sb-av" id="sbA">?</div><div class="sb-ui"><div class="sb-un" id="sbNm">—</div><div class="sb-ur" id="sbR">—</div></div><button class="lo" onclick="doLogout()">Sign Out</button></div></div>
+  </aside>
+  <div class="mc">
+    <div class="tb"><div><div class="pg-t" id="pgT">Dashboard</div><div class="pg-b" id="pgB">—</div></div></div>
+    <div class="ct" id="ct"></div>
+  </div>
+</div>
 
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat"><div class="stat-val">8</div><div class="stat-label">Business Sectors</div></div>
-    <div class="stat"><div class="stat-val">200+</div><div class="stat-label">Legacy Pages Consolidated</div></div>
-    <div class="stat"><div class="stat-val">3</div><div class="stat-label">UAT Environments</div></div>
-    <div class="stat"><div class="stat-val">110+</div><div class="stat-label">Production Files</div></div>
+<!-- ═══════ MODAL ═══════ -->
+<div class="modal-bg" id="mBg" onclick="if(event.target===this)closeM()"><div class="modal" id="mC"></div></div>
+
+<script>
+const API='https://fms-api-dfcb.onrender.com';
+const NAV={
+  'command-center':{l:'Command Center',i:'🎯',p:[{id:'overview',l:'Operations Overview',i:'📋'},{id:'live-map',l:'Live Fleet Map',i:'🗺️'}]},
+  'fleet-intelligence':{l:'Fleet Intelligence',i:'🚛',p:[{id:'vehicles',l:'Vehicle Directory',i:'🚗',b:'vehicles'},{id:'drivers',l:'Driver Hub',i:'👥',b:'drivers'},{id:'fuel',l:'Fuel Analytics',i:'⛽'},{id:'maintenance',l:'Maintenance Studio',i:'🔧'}]},
+  'trip-logistics':{l:'Trip & Logistics',i:'📦',p:[{id:'routes',l:'Route Management',i:'🛣️'},{id:'geofences',l:'Geofence Management',i:'📍'},{id:'deliveries',l:'Active Deliveries',i:'🚚'}]},
+  'safety-compliance':{l:'Safety & Compliance',i:'🛡️',p:[{id:'incidents',l:'Incident Center',i:'⚠️'}]},
+  'device-iot':{l:'Device & IoT',i:'📡',p:[{id:'devices',l:'Device Fleet',i:'🔌'}]},
+  'analytics':{l:'Analytics',i:'📊',p:[{id:'insights',l:'Insight Builder',i:'📈'}]},
+  'settings':{l:'Settings',i:'⚙️',p:[{id:'company',l:'Company Configuration',i:'🏢'},{id:'users',l:'User Management',i:'👤'},{id:'roles',l:'Role & Permissions',i:'🔐'},{id:'features',l:'Feature Management',i:'🎛️'},{id:'subscription',l:'Subscription',i:'💳'}]}
+};
+const PLAN={'pro':['command-center','fleet-intelligence','trip-logistics','safety-compliance','device-iot','analytics','settings'],'enterprise':['command-center','fleet-intelligence','trip-logistics','safety-compliance','device-iot','analytics','settings'],'basic':['command-center','fleet-intelligence','settings']};
+let U=null,T=null,pg='overview',map=null,allUsers=[],allRoles=[],allFeatures=[];
+
+// ═══ Auth ═══
+async function chk(){try{const r=await fetch(API+'/health',{signal:AbortSignal.timeout(8000)});if(r.ok){$('apiDot').classList.add('on');$('apiSt').textContent='API connected'}else $('apiSt').textContent='API '+r.status}catch(e){$('apiSt').textContent='API unreachable'}}
+function $(id){return document.getElementById(id)}
+function fill(e,p,t){$('email').value=e;$('password').value=p;$('tenant').value=t}
+async function doLogin(e){e.preventDefault();const b=$('loginBtn'),er=$('errMsg');b.disabled=true;b.innerHTML='<span class="sp"></span> Signing in...';er.style.display='none';try{const body={email:$('email').value,password:$('password').value};const t=$('tenant').value;if(t)body.tenantSubdomain=t;const r=await fetch(API+'/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.title||d.message||'Login failed');localStorage.setItem('fms_token',d.accessToken);localStorage.setItem('fms_user',JSON.stringify(d.user));U=d.user;T=d.accessToken;showDash()}catch(x){er.textContent=x.message;er.style.display='block'}finally{b.disabled=false;b.innerHTML='Sign In'}}
+function doLogout(){localStorage.removeItem('fms_token');localStorage.removeItem('fms_user');U=null;T=null;$('loginPage').style.display='flex';$('appLayout').classList.remove('on');$('loginForm').reset();$('errMsg').style.display='none'}
+function showDash(){$('loginPage').style.display='none';$('appLayout').classList.add('on');$('sbT').textContent=U.tenantName;$('sbNm').textContent=(U.firstName||''+' '+U.lastName||'').trim()||U.email;$('sbR').textContent=U.roleName||'User';$('sbA').textContent=(U.firstName||U.email||'?')[0].toUpperCase();buildNav();navTo('overview')}
+function buildNav(){const nv=$('sbN');const plan=U.plan||'pro';const mods=PLAN[plan]||PLAN.pro;let h='';mods.forEach(m=>{const mod=NAV[m];if(!mod)return;h+=`<div class="ns"><div class="nst">${mod.i} ${mod.l}</div>`;mod.p.forEach(p=>{h+=`<a class="ni ${pg===p.id?'act':''}" onclick="navTo('${p.id}')" data-pg="${p.id}"><span class="ic">${p.i}</span><span>${p.l}</span>${p.b?`<span class="bg" id="bg-${p.b}" style="margin-left:auto;padding:2px 6px;border-radius:8px;font-size:9px;font-weight:700;background:rgba(99,102,241,.2);color:var(--ac)">—</span>`:''}</a>`});h+='</div>'});nv.innerHTML=h}
+
+// ═══ Navigation ═══
+const TITLES={overview:['Command Center','Dashboard / Overview'],'live-map':['Live Fleet Map','Dashboard / Live Map'],vehicles:['Vehicle Directory','Fleet / Vehicles'],drivers:['Driver Hub','Fleet / Drivers'],fuel:['Fuel Analytics','Fleet / Fuel'],maintenance:['Maintenance Studio','Fleet / Maintenance'],routes:['Route Management','Trips / Routes'],geofences:['Geofence Management','Trips / Geofences'],deliveries:['Active Deliveries','Trips / Deliveries'],incidents:['Incident Center','Safety / Incidents'],devices:['Device Fleet','IoT / Devices'],insights:['Insight Builder','Analytics / Insights'],company:['Company Configuration','Settings / Company'],users:['User Management','Settings / Users'],roles:['Role & Permissions','Settings / Roles'],features:['Feature Management','Settings / Features'],subscription:['Subscription','Settings / Subscription']};
+function navTo(p){pg=p;document.querySelectorAll('.ni').forEach(el=>el.classList.toggle('act',el.dataset.pg===p));const[t,c]=TITLES[p]||[p,p];$('pgT').textContent=t;$('pgB').textContent=c;render(p)}
+function render(p){const R={overview:rOverview,'live-map':rLiveMap,vehicles:rVehicles,drivers:rDrivers,devices:rDevices,fuel:rFuel,maintenance:rMaintenance,routes:rRoutes,geofences:rGeofences,deliveries:rDeliveries,incidents:rIncidents,insights:rInsights,company:rCompany,users:rUsers,roles:rRoles,features:rFeatures,subscription:rSubscription};(R[p]||rPlaceholder)($('ct'))}
+
+// ═══ API ═══
+async function apiG(p){try{const r=await fetch(API+p,{headers:{'Authorization':'Bearer '+T}});if(!r.ok)return null;return await r.json()}catch{return null}}
+async function apiP(p,b){try{const r=await fetch(API+p,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},body:JSON.stringify(b)});return{ok:r.ok,data:await r.json()}}catch{return{ok:false,data:{}}}}
+async function apiPut(p,b){try{const r=await fetch(API+p,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},body:JSON.stringify(b)});return{ok:r.ok,data:await r.json()}}catch{return{ok:false,data:{}}}}
+async function apiDel(p){try{const r=await fetch(API+p,{method:'DELETE',headers:{'Authorization':'Bearer '+T}});return{ok:r.ok,data:await r.json()}}catch{return{ok:false,data:{}}}}
+
+// ═══ UI Helpers ═══
+function tbl(h,rows,opts={}){let s=`<table class="dt-t"><thead><tr>`;h.forEach(t=>s+=`<th>${t}</th>`);s+=`</tr></thead><tbody>`;if(!rows||!rows.length)s+=`<tr><td colspan="${h.length}" class="empty">${opts.empty||'No data found'}</td></tr>`;else rows.forEach(r=>s+=`<tr>${r}</tr>`);return s+`</tbody></table>`}
+function badge(s){const c={active:'ok',maintenance:'wn',offline:'er',inactive:'er',online:'ok'}[s?.toLowerCase()]||'wn';return`<span class="sb2 ${c}"><span class="sd"></span>${s||'—'}</span>`}
+function openM(html){$('mC').innerHTML=html;$('mBg').classList.add('on')}
+function closeM(){$('mBg').classList.remove('on')}
+function formField(label,input,req=false){return`<div class="fg"><label>${label}${req?' <span class="req">*</span>':''}</label>${input}</div>`}
+function formSelect(label,options,req=false){return formField(label,`<select>${options.map(o=>`<option value="${o.v||o}">${o.l||o}</option>`).join('')}</select>`,req)}
+function formInput(label,placeholder='',type='text',req=false){return formField(label,`<input type="${type}" placeholder="${placeholder}">`,req)}
+
+// ═══════════════ CRUD PAGES ═══════════════
+
+// ─── OVERVIEW ───
+async function rOverview(el){
+  el.innerHTML=`<div class="sg"><div class="sc"><div class="si">🚛</div><div class="sv" id="sV"><span class="sp"></span></div><div class="sl">Vehicles</div></div><div class="sc"><div class="si">👥</div><div class="sv" id="sD"><span class="sp"></span></div><div class="sl">Drivers</div></div><div class="sc"><div class="si">📡</div><div class="sv" id="sDev"><span class="sp"></span></div><div class="sl">Active Devices</div></div><div class="sc"><div class="si">⚡</div><div class="sv" id="sOn"><span class="sp"></span></div><div class="sl">Online Now</div></div></div>
+  <div class="st">🗺️ Fleet Overview</div><div id="mapC" style="height:320px;border-radius:10px;border:1px solid var(--bl);margin-bottom:24px;z-index:0"></div>
+  <div class="st">🚛 Recent Vehicles</div><div id="oTbl"><span class="sp"></span></div>`;
+  const v=await apiG('/api/v1/fleet/vehicles');const vs=v?.items||[];const d=await apiG('/api/v1/fleet/drivers');const ds=d?.items||[];
+  $('sV').textContent=vs.length;$('sD').textContent=ds.length;$('sDev').textContent=vs.length;$('sOn').textContent=Math.round(vs.length*.8);
+  const bV=$('bg-vehicles'),bD=$('bg-drivers');if(bV)bV.textContent=vs.length;if(bD)bD.textContent=ds.length;
+  $('oTbl').innerHTML=tbl(['Vehicle #','Type','Model','Status'],vs.slice(0,5).map(v=>`<td style="font-weight:600">${v.vehicleNumber||'—'}</td><td>${v.type||'—'}</td><td>${v.model||'—'}</td><td>${badge(v.status)}</td>`));
+  setTimeout(initMap,200);
+}
+async function rLiveMap(el){el.innerHTML=`<div class="st">🗺️ Live Fleet Map</div><div id="fullMap" style="height:calc(100vh - 160px);border-radius:10px;border:1px solid var(--bl);z-index:0"></div>`;setTimeout(()=>initMap('fullMap',true),100)}
+async function rVehicles(el){
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">🚛 Vehicle Directory</div><button class="btn btn-p btn-s" onclick="showVehicleForm()">+ Add Vehicle</button></div><div class="tb-bar"><input type="text" placeholder="Search vehicles..." id="vSearch" oninput="loadVehicles()"><select id="vStatus" onchange="loadVehicles()"><option value="">All Status</option><option value="active">Active</option><option value="maintenance">Maintenance</option><option value="inactive">Inactive</option></select></div><div id="vTbl"><span class="sp"></span></div>`;await loadVehicles()}
+async function loadVehicles(){const v=await apiG('/api/v1/fleet/vehicles');const vs=v?.items||[];$('vTbl').innerHTML=tbl(['Vehicle #','Type','Model','Year','Fuel','Status','Actions'],vs.map(v=>`<td style="font-weight:600">${v.vehicleNumber||'—'}</td><td>${v.type||'—'}</td><td>${v.model||'—'}</td><td>${v.year||'—'}</td><td>${v.fuelType||'—'}</td><td>${badge(v.status)}</td><td><button class="btn btn-o btn-s" onclick="showVehicleForm('${v.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)" onclick="delVehicle('${v.id}','${v.vehicleNumber}')">Del</button></td>`),{empty:'No vehicles found. Click "+ Add Vehicle" to create one.'})}
+function showVehicleForm(id){
+  openM(`<div class="modal-hd"><h2>🚛 ${id?'Edit':'Add'} Vehicle</h2><button class="close" onclick="closeM()">&times;</button></div>
+  <div class="modal-bd"><div class="form-row">
+    ${formInput('Vehicle Number *','MH-01-AB-1234','text',true)}
+    ${formSelect('Type *',['Truck','Sedan','SUV','Tanker','Container','Refrigerated','Heavy Equipment','Support Vehicle'],true)}
+  </div><div class="form-row">
+    ${formInput('Model *','Tata Prima 2525.K','text',true)}
+    ${formInput('Year *','2024','number',true)}
+  </div><div class="form-row">
+    ${formSelect('Fuel Type *',['Diesel','Petrol','CNG','Electric','Hybrid'],true)}
+    ${formSelect('Status *',['Active','Maintenance','Inactive'],true)}
+  </div></div>
+  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveVehicle('${id||''}')">Submit</button></div>`);
+}
+async function saveVehicle(id){const body={vehicleNumber:$('mC').querySelectorAll('input')[0].value,type:$('mC').querySelectorAll('select')[0].value,model:$('mC').querySelectorAll('input')[1].value,year:parseInt($('mC').querySelectorAll('input')[2].value),fuelType:$('mC').querySelectorAll('select')[1].value,status:$('mC').querySelectorAll('select')[2].value.toLowerCase()};const r=await apiP('/api/v1/fleet/vehicles',body);if(r.ok){closeM();loadVehicles()}else alert(r.data.title||'Failed')}
+async function delVehicle(id,num){if(!confirm(`Delete vehicle ${num}?`))return;await apiDel('/api/v1/fleet/vehicles/'+id);loadVehicles()}
+
+// ─── DRIVERS ───
+async function rDrivers(el){
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">👥 Driver Hub</div><button class="btn btn-p btn-s" onclick="showDriverForm()">+ Add Driver</button></div><div id="dTbl"><span class="sp"></span></div>`;
+  const d=await apiG('/api/v1/fleet/drivers');const ds=d?.items||[];
+  $('dTbl').innerHTML=tbl(['Name','License #','Phone','Score','Status','Actions'],ds.map(d=>{const nm=`${d.firstName||''} ${d.lastName||''}`.trim()||'—';const sc=d.behaviorScore||0;const c=sc>=90?'var(--ok)':sc>=75?'var(--wn)':'var(--er)';return`<td style="font-weight:600">${nm}</td><td>${d.licenseNumber||'—'}</td><td>${d.phone||'—'}</td><td><div class="score"><div class="score-trk"><div class="score-fl" style="width:${sc}%;background:${c}"></div></div><span style="font-size:11px;font-weight:600;color:${c}">${sc}</span></div></td><td>${badge(d.status)}</td><td><button class="btn btn-o btn-s" onclick="showDriverForm('${d.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)">Del</button></td>`}),{empty:'No drivers found'});
+}
+function showDriverForm(id){
+  openM(`<div class="modal-hd"><h2>👥 ${id?'Edit':'Add'} Driver</h2><button class="close" onclick="closeM()">&times;</button></div>
+  <div class="modal-bd"><div class="form-row">
+    ${formInput('First Name *','Suresh','text',true)}
+    ${formInput('Last Name *','Patil','text',true)}
+  </div><div class="form-row">
+    ${formInput('License Number *','MH-DRV-001','text',true)}
+    ${formInput('Phone *','+91-9876543210','tel',true)}
+  </div><div class="form-row">
+    ${formInput('License Expiry','2028-01-01','date')}
+    ${formSelect('Status *',['Active','Inactive'],true)}
+  </div></div>
+  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveDriver('${id||''}')">Submit</button></div>`);
+}
+async function saveDriver(id){const inputs=$('mC').querySelectorAll('input');const sels=$('mC').querySelectorAll('select');const body={firstName:inputs[0].value,lastName:inputs[1].value,licenseNumber:inputs[2].value,phone:inputs[3].value,licenseExpiry:inputs[4].value,status:sels[0].value.toLowerCase()};await apiP('/api/v1/fleet/drivers',body);closeM();rDrivers($('ct'))}
+
+// ─── DEVICES ───
+async function rDevices(el){
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📡 Device Fleet</div><button class="btn btn-p btn-s" onclick="showDeviceForm()">+ Add Device</button></div><div id="dvTbl"><span class="sp"></span></div>`;
+  const d=await apiG('/api/v1/fleet/devices');const ds=d?.items||[];
+  $('dvTbl').innerHTML=tbl(['IMEI','Model','Serial','Speed','Battery','Status','Actions'],ds.map(d=>`<td style="font-family:monospace;font-size:11px">${d.imei||'—'}</td><td>${d.model||'—'}</td><td>${d.serialNumber||'—'}</td><td>${d.lastSpeed||0} km/h</td><td>${d.batteryLevel||0}%</td><td>${badge(d.status)}</td><td><button class="btn btn-o btn-s" onclick="showDeviceForm('${d.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)">Del</button></td>`),{empty:'No devices found'});
+}
+function showDeviceForm(id){
+  openM(`<div class="modal-hd"><h2>📡 ${id?'Edit':'Add'} Device</h2><button class="close" onclick="closeM()">&times;</button></div>
+  <div class="modal-bd"><div class="form-row">
+    ${formInput('IMEI *','867959033200001','text',true)}
+    ${formInput('Serial Number *','IT-VT300-001','text',true)}
+  </div><div class="form-row">
+    ${formInput('Model *','iTriangle VT300','text',true)}
+    ${formSelect('Status *',['Active','Offline','Maintenance'],true)}
+  </div></div>
+  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s">Submit</button></div>`);
+}
+
+// ─── ROUTES ───
+async function rRoutes(el){
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">🛣️ Route Management</div><button class="btn btn-p btn-s" onclick="showRouteForm()">+ Create Route</button></div>
+  <div class="set-card"><h3>🗺️ Route Map</h3><div id="routeMap" style="height:300px;border-radius:8px;z-index:0"></div></div>
+  <div id="rTbl"></div>`;
+  $('rTbl').innerHTML=tbl(['Route Name','Start','End','Type','Distance','Status','Actions'],[
+    `<td style="font-weight:600">Mumbai-Pune Express</td><td>Mumbai</td><td>Pune</td><td>Fixed</td><td>150 km</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
+    `<td style="font-weight:600">Delhi-Jaipur Highway</td><td>Delhi</td><td>Jaipur</td><td>Dynamic</td><td>280 km</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
+  ]);
+  setTimeout(()=>{const c=document.getElementById('routeMap');if(c&&!map){map=L.map('routeMap').setView([20.5,78.9],5);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map)}},200);
+}
+function showRouteForm(){
+  openM(`<div class="modal-hd"><h2>🛣️ Create Route</h2><button class="close" onclick="closeM()">&times;</button></div>
+  <div class="modal-bd"><div class="form-row">
+    ${formInput('Start Location *','Enter start address','text',true)}
+    ${formInput('End Location *','Enter end address','text',true)}
+  </div><div class="form-row">
+    ${formInput('Route Name *','Mumbai-Pune Express','text',true)}
+    ${formSelect('Route Type *',['Fixed','Dynamic','Roundtrip'],true)}
+  </div><div class="form-row">
+    ${formInput('Waypoints','Via point addresses')}
+    ${formInput('Estimated Distance (km)','150','number')}
+  </div></div>
+  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="closeM()">Submit</button></div>`);
+}
+
+// ─── GEOFENCES ───
+async function rGeofences(el){
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📍 Geofence Management</div><button class="btn btn-p btn-s" onclick="showGeoForm()">+ Create Geofence</button></div>
+  <div class="set-card"><div id="geoMap" style="height:350px;border-radius:8px;z-index:0"></div></div>
+  <div id="geoTbl"></div>`;
+  $('geoTbl').innerHTML=tbl(['Geofence Name','Location Type','Radius (m)','Color','Status','Actions'],[
+    `<td style="font-weight:600">Mumbai Warehouse</td><td>Plant</td><td>500</td><td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#3b82f6"></span> Blue</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
+    `<td style="font-weight:600">Pune Distribution Center</td><td>Warehouse</td><td>300</td><td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#10b981"></span> Green</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
+  ]);
+  setTimeout(()=>{const c=document.getElementById('geoMap');if(c&&!map){map=L.map('geoMap').setView([19.076,72.877],11);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);L.circle([19.076,72.877],{color:'#3b82f6',fillColor:'#3b82f6',fillOpacity:.15,radius:500}).addTo(map).bindPopup('<b>Mumbai Warehouse</b><br>500m radius')}},200);
+}
+function showGeoForm(){
+  openM(`<div class="modal-hd"><h2>📍 Create Geofence</h2><button class="close" onclick="closeM()">&times;</button></div>
+  <div class="modal-bd"><div class="form-row">
+    ${formInput('Geofence Name *','Mumbai Warehouse','text',true)}
+    ${formSelect('Location Type *',['Plant','Warehouse','Customer Location','Vendor Location','Checkpost'],true)}
+  </div><div class="form-row">
+    ${formInput('Search Address','San Marino')}
+    ${formInput('Radius (m) *','500','number',true)}
+  </div><div class="form-row">
+    ${formSelect('Color *',['Blue','Green','Red','Yellow','Orange','Purple'],true)}
+    ${formInput('Latitude','19.076')}
+  </div></div>
+  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="closeM()">Submit</button></div>`);
+}
+
+// ─── DELIVERIES ───
+async function rDeliveries(el){
+  el.innerHTML=`<div class="st">🚚 Active Deliveries</div><div id="dlTbl"></div>`;
+  $('dlTbl').innerHTML=tbl(['Trip #','Vehicle','Driver','Origin','Destination','ETA','Status'],[
+    `<td style="font-weight:600">TRP-001</td><td>MH-01-AB-1234</td><td>Suresh Patil</td><td>Mumbai</td><td>Pune</td><td>2026-08-30 14:00</td><td>${badge('active')}</td>`,
+    `<td style="font-weight:600">TRP-002</td><td>DL-01-IJ-7890</td><td>Arun Desai</td><td>Delhi</td><td>Jaipur</td><td>2026-08-30 18:30</td><td>${badge('maintenance')}</td>`,
+  ]);
+}
+
+// ─── INCIDENTS ───
+async function rIncidents(el){
+  el.innerHTML=`<div class="st">⚠️ Incident Center</div><div id="incTbl"></div>`;
+  $('incTbl').innerHTML=tbl(['Date','Vehicle','Type','Severity','Driver','Status','Actions'],[
+    `<td>2026-08-28</td><td>MH-01-AB-1234</td><td>Hard Braking</td><td><span class="sb2 wn"><span class="sd"></span>Medium</span></td><td>Suresh Patil</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">View</button></td>`,
+    `<td>2026-08-27</td><td>DL-01-IJ-7890</td><td>Overspeed</td><td><span class="sb2 er"><span class="sd"></span>High</span></td><td>Arun Desai</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">View</button></td>`,
+    `<td>2026-08-25</td><td>MH-02-CD-5678</td><td>Geofence Exit</td><td><span class="sb2 wn"><span class="sd"></span>Low</span></td><td>Vikram Singh</td><td>${badge('maintenance')}</td><td><button class="btn btn-o btn-s">View</button></td>`,
+  ]);
+}
+
+// ─── FUEL / MAINTENANCE / INSIGHTS ───
+function rFuel(el){el.innerHTML=`<div class="st">⛽ Fuel Analytics</div><div class="sg"><div class="sc"><div class="si">⛽</div><div class="sv">—</div><div class="sl">Avg Consumption</div></div><div class="sc"><div class="si">💰</div><div class="sv">—</div><div class="sl">Monthly Cost</div></div><div class="sc"><div class="si">📉</div><div class="sv">—</div><div class="sl">Waste Detected</div></div><div class="sc"><div class="si">🎯</div><div class="sv">—</div><div class="sl">Efficiency Score</div></div></div><div class="pg-e"><div class="ic">⛽</div><div class="ti">Fuel Analytics</div><div class="ds">Connect IoT fuel sensors for real-time monitoring. Data from devices will populate this dashboard automatically.</div></div>`}
+function rMaintenance(el){el.innerHTML=`<div class="st">🔧 Maintenance Studio</div><div id="mtTbl"></div>`;$('mtTbl').innerHTML=tbl(['Vehicle','Service Type','Scheduled','Priority','Status','Actions'],[`<td style="font-weight:600">MH-01-AB-1234</td><td>Oil Change</td><td>2026-09-15</td><td><span class="sb2 wn"><span class="sd"></span>Medium</span></td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button></td>`,`<td style="font-weight:600">KA-01-GH-3456</td><td>Brake Inspection</td><td>2026-09-20</td><td><span class="sb2 er"><span class="sd"></span>High</span></td><td>${badge('maintenance')}</td><td><button class="btn btn-o btn-s">Edit</button></td>`])}
+function rInsights(el){el.innerHTML=`<div class="st">📈 Insight Builder</div><div class="sg"><div class="sc"><div class="si">📊</div><div class="sv">—</div><div class="sl">Total Trips</div></div><div class="sc"><div class="si">⏱️</div><div class="sv">—</div><div class="sl">Avg Trip Time</div></div><div class="sc"><div class="si">🛣️</div><div class="sv">—</div><div class="sl">Total Distance</div></div><div class="sc"><div class="si">⭐</div><div class="sv">—</div><div class="sl">Safety Score</div></div></div><div class="pg-e"><div class="ic">📈</div><div class="ti">Insight Builder</div><div class="ds">Build custom reports from fleet data. Connect to BI tools for advanced analytics.</div></div>`}
+
+// ═══════════════ SETTINGS PAGES ═══════════════
+
+// ─── COMPANY CONFIGURATION (like your Company Master form) ───
+async function rCompany(el){
+  const t=await apiG('/api/v1/settings/tenant');const ts=t||{};
+  el.innerHTML=`<div class="set-card"><h3>🏢 Company Information</h3>
+  <div class="form-row">
+    ${formInput('Company Name *',ts.name||'','text',true)}
+    ${formInput('Subdomain',ts.subdomain||'','text')}
+  </div><div class="form-row">
+    ${formSelect('Country *',[{v:'IN',l:'India'},{v:'US',l:'United States'},{v:'SA',l:'Saudi Arabia'},{v:'AE',l:'UAE'},{v:'GB',l:'United Kingdom'}],true)}
+    ${formInput('Pin Code','400001')}
+  </div><div class="form-row">
+    ${formSelect('Timezone *',[{v:'Asia/Kolkata',l:'Asia/Kolkata (IST)'},{v:'America/New_York',l:'America/New_York (EST)'},{v:'Asia/Riyadh',l:'Asia/Riyadh (AST)'},{v:'UTC',l:'UTC'}],true)}
+    ${formSelect('Currency *',[{v:'INR',l:'INR - Indian Rupee'},{v:'USD',l:'USD - US Dollar'},{v:'SAR',l:'SAR - Saudi Riyal'},{v:'EUR',l:'EUR - Euro'}],true)}
+  </div><div class="form-row">
+    ${formSelect('Plan *',[{v:'basic',l:'Basic'},{v:'pro',l:'Professional'},{v:'enterprise',l:'Enterprise'}],true)}
+    ${formSelect('Status *',[{v:'active',l:'Active'},{v:'inactive',l:'Inactive'}],true)}
+  </div></div>
+
+  <div class="set-card"><h3>📍 Address Details</h3>
+  <div class="form-row">${formInput('Address *','Company address','text',true)}${formInput('City *','Mumbai','text',true)}</div>
+  <div class="form-row">${formInput('State *','Maharashtra','text',true)}${formInput('Country Code',ts.countryCode||'IN')}</div>
   </div>
 
-  <!-- 8 SECTORS -->
-  <section class="section" id="sectors">
-    <h2 class="section-title">8 Business Sectors</h2>
-    <p class="section-sub">Each sector is a deployable Module Federation plugin. Tenants subscribe to only what they need.</p>
-    <div class="sectors-grid">
-      <div class="sector-card">
-        <div class="sector-icon">🚛</div>
-        <div class="sector-name">Logistics</div>
-        <div class="sector-desc">Real-time tracking, geofencing, dispatch, fuel monitoring, maintenance, POD, driver scorecards</div>
-        <div class="sector-phase">Phase 1 — 20 weeks</div>
-      </div>
-      <div class="sector-card">
-        <div class="sector-icon">🚕</div>
-        <div class="sector-name">Taxis</div>
-        <div class="sector-desc">GPS tracking, trip replay, dual camera, panic button, face ID, fare alerts, fake trip detection</div>
-        <div class="sector-phase">Phase 1 — 18 weeks</div>
-      </div>
-      <div class="sector-card">
-        <div class="sector-icon">🎒</div>
-        <div class="sector-name">School Buses</div>
-        <div class="sector-desc">Student tracking, parent notifications, stop arm capture, route management, unattended alerts</div>
-        <div class="sector-phase">Phase 1 — 16 weeks</div>
-      </div>
-      <div class="sector-card">
-        <div class="sector-icon">🚑</div>
-        <div class="sector-name">Ambulances</div>
-        <div class="sector-desc">Real-time dispatch, incident video upload, ADAS, panic SOS, control tower coordination</div>
-        <div class="sector-phase">Phase 1 — 14 weeks</div>
-      </div>
-      <div class="sector-card">
-        <div class="sector-icon">🚌</div>
-        <div class="sector-name">Public Transport</div>
-        <div class="sector-desc">Route management, passenger counting, onboard terminals, blind spot detection, SOS</div>
-        <div class="sector-phase">Phase 2 — 15 weeks</div>
-      </div>
-      <div class="sector-card">
-        <div class="sector-icon">⛏️</div>
-        <div class="sector-name">Mining</div>
-        <div class="sector-desc">Fleet tracking, TPMS, proximity warning, carbon footprint, heavy equipment telemetry</div>
-        <div class="sector-phase">Phase 2 — 18 weeks</div>
-      </div>
-      <div class="sector-card">
-        <div class="sector-icon">🚆</div>
-        <div class="sector-name">Railways</div>
-        <div class="sector-desc">Train tracking, loco pilot behavior, obstacle detection, wheel-flat monitoring, wayside health</div>
-        <div class="sector-phase">Phase 2 — 22 weeks</div>
-      </div>
-      <div class="sector-card">
-        <div class="sector-icon">🚔</div>
-        <div class="sector-name">Law Enforcement</div>
-        <div class="sector-desc">ALPR, body-worn cameras, patrol dispatch, evidence upload, facial recognition, drone integration</div>
-        <div class="sector-phase">Phase 2 — 25 weeks</div>
-      </div>
-    </div>
-  </section>
+  <div class="set-card"><h3>📞 Contact Information</h3>
+  <div class="form-row">${formInput('Contact Person','Rajesh Kumar')}${formInput('Contact No. *','+91-9876543210','tel',true)}</div>
+  <div class="form-row">${formInput('Email ID *','admin@acme-logistics.com','email',true)}${formInput('Alternate Email','')}</div>
+  <div class="form-row">${formInput('Company Phone','+91-22-12345678','tel')}${formInput('Mobile No.','+91-9876543211','tel')}</div>
+  </div>
 
-  <!-- FEATURES -->
-  <section class="section" id="features">
-    <h2 class="section-title">Dynamic Everything</h2>
-    <p class="section-sub">Every UI element — navbar, tables, forms, alerts, reports — is configurable per tenant and per user.</p>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🏢</div>
-        <div class="feature-title">Multi-Tenant Architecture</div>
-        <div class="feature-desc">Shared DB with Row-Level Security, schema-per-tenant for enterprise, database-per-tenant for government. Every query scoped by tenant.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌍</div>
-        <div class="feature-title">Multi-Country Compliance</div>
-        <div class="feature-desc">GDPR, data residency routing, multi-currency, multi-language, RTL support. Country-specific tax and compliance rules.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎨</div>
-        <div class="feature-title">White-Label Branding</div>
-        <div class="feature-desc">Custom domain, logo, colors, CSS variables, email templates. Each tenant gets a fully branded experience.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <div class="feature-title">Dynamic Table Columns</div>
-        <div class="feature-desc">Users configure table columns — order, width, visibility, sort. Preferences saved per user per page.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📝</div>
-        <div class="feature-title">JSON Schema Forms</div>
-        <div class="feature-desc">Tenant admins add custom fields without code deployment. Forms rendered at runtime from JSON Schema definitions.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📡</div>
-        <div class="feature-title">Device Adapter Framework</div>
-        <div class="feature-desc">Vendor-agnostic MQTT ingestion. Onboard any GPS vendor via JSON config — zero code changes required.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <div class="feature-title">Real-Time Telemetry</div>
-        <div class="feature-desc">MQTT → RabbitMQ → SignalR. Live device streams, tenant-isolated WebSocket groups, instant alerts.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <div class="feature-title">Dynamic RBAC</div>
-        <div class="feature-desc">Tenant-defined roles with granular permissions. Different users in the same company see different menus and data.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔔</div>
-        <div class="feature-title">Configurable Alerts</div>
-        <div class="feature-desc">Per-tenant, per-country alert thresholds. Email, SMS, push, WhatsApp notifications. Locale-aware templates.</div>
-      </div>
-    </div>
-  </section>
+  <div class="set-card"><h3>📝 Legal & Tax</h3>
+  <div class="form-row">${formInput('GST No.','27AABCU9603R1ZM')}${formInput('PAN No.','AABCU9603R')}</div>
+  <div class="form-row">${formInput('CIN No.','U72200MH2006PTC160739')}${formInput('Tax Registration','')}</div>
+  </div>
 
-  <!-- ARCHITECTURE -->
-  <section class="section" id="architecture">
-    <h2 class="section-title">Tech Stack</h2>
-    <p class="section-sub">Built on free-tier infrastructure, ready to scale to enterprise.</p>
-    <div class="arch-block"><div class="arch-icon">🅰️</div><div><div class="arch-title">Angular 17+ Shell</div><div class="arch-tech">Module Federation · Dynamic nav · i18n/l10n · Leaflet maps · White-label themer</div></div></div>
-    <div class="arch-block"><div class="arch-icon">⚡</div><div><div class="arch-title">.NET 8 Web API</div><div class="arch-tech">Clean Architecture · CQRS + MediatR · FluentValidation · SignalR</div></div></div>
-    <div class="arch-block"><div class="arch-icon">🐘</div><div><div class="arch-title">PostgreSQL (Neon)</div><div class="arch-tech">Serverless · Row-Level Security · Branching · Schema-per-tenant option</div></div></div>
-    <div class="arch-block"><div class="arch-icon">🍃</div><div><div class="arch-title">MongoDB Atlas</div><div class="arch-tech">Time-series telemetry · Sharded by tenantId + countryCode · Free M0 cluster</div></div></div>
-    <div class="arch-block"><div class="arch-icon">📡</div><div><div class="arch-title">MQTT + RabbitMQ</div><div class="arch-tech">Mosquitto local / EMQX Cloud · CloudAMQP free tier · MassTransit consumers</div></div></div>
-    <div class="arch-block"><div class="arch-icon">🔴</div><div><div class="arch-title">Redis (Upstash)</div><div class="arch-tech">Tenant-scoped caching · Session management · 10K requests/day free</div></div></div>
-    <div class="arch-block"><div class="arch-icon">☁️</div><div><div class="arch-title">Cloudflare + Railway</div><div class="arch-tech">CDN + R2 (zero egress) · CI/CD via GitHub Actions · Grafana monitoring</div></div></div>
-  </section>
+  <div class="set-card"><h3>🎨 Branding</h3>
+  <div class="form-row">
+    ${formInput('Primary Color','#2563eb','color')}
+    ${formInput('Secondary Color','#3b82f6','color')}
+  </div><div class="form-row">
+    ${formInput('Logo URL','/assets/logo.svg')}
+    <div class="fg"><label>Active</label><label class="toggle"><input type="checkbox" checked><span class="sl"></span></label></div>
+  </div></div>
 
-  <!-- UAT ENVIRONMENTS -->
-  <section class="section" id="uat">
-    <h2 class="section-title">UAT Environments</h2>
-    <p class="section-sub">Live demo environments committed with sample data and pre-configured URLs.</p>
-    <div class="env-grid">
-      <div class="env-card">
-        <div class="env-label">🌐 Web Application</div>
-        <div class="env-url">https://fms-web-uat.vercel.app</div>
-        <div class="env-tag">Vercel · UAT</div>
-      </div>
-      <div class="env-card">
-        <div class="env-label">⚙️ API Backend</div>
-        <div class="env-url">https://fms-api-uat.onrender.com</div>
-        <div class="env-tag">Render · UAT</div>
-      </div>
-      <div class="env-card">
-        <div class="env-label">🛡️ Admin Portal</div>
-        <div class="env-url">https://fms-admin-uat.vercel.app</div>
-        <div class="env-tag">Vercel · UAT</div>
-      </div>
-      <div class="env-card">
-        <div class="env-label">📡 MQTT Broker</div>
-        <div class="env-url">mqtt://fms-mqtt-uat.onrender.com:1883</div>
-        <div class="env-tag">Mosquitto · UAT</div>
-      </div>
-    </div>
-  </section>
+  <div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-o btn-s">Cancel</button><button class="btn btn-p btn-s" onclick="saveTenant()">Submit</button></div>`;
+}
+async function saveTenant(){const inputs=$('ct').querySelectorAll('input');const body={name:inputs[0].value,timezone:$('ct').querySelectorAll('select')[2].value,currency:$('ct').querySelectorAll('select')[3].value};const r=await apiPut('/api/v1/settings/tenant',body);if(r.ok)alert('Company settings saved!');else alert('Failed to save')}
 
-  <!-- DEMO CREDENTIALS -->
-  <section class="section" id="credentials">
-    <h2 class="section-title">Demo Credentials</h2>
-    <p class="section-sub">Pre-seeded tenants with sample vehicles, drivers, devices, and feature configurations.</p>
-    <table class="cred-table">
-      <thead>
-        <tr>
-          <th>Tenant</th>
-          <th>Email</th>
-          <th>Password</th>
-          <th>Sectors</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>🏢 <strong>Acme Logistics Corp</strong></td>
-          <td><code>admin@acme-logistics.com</code></td>
-          <td><code>Admin@123</code></td>
-          <td>🚛 Logistics</td>
-        </tr>
-        <tr>
-          <td>🚕 <strong>SafeRide Taxi Services</strong></td>
-          <td><code>admin@saferide-taxi.com</code></td>
-          <td><code>Admin@123</code></td>
-          <td>🚕 Taxis</td>
-        </tr>
-        <tr>
-          <td>⛏️ <strong>Gulf Mining Group</strong></td>
-          <td><code>admin@gulf-mining.com</code></td>
-          <td><code>Admin@123</code></td>
-          <td>⛏️ Mining</td>
-        </tr>
-      </tbody>
-    </table>
+// ─── USER MANAGEMENT (like your User Master form) ───
+async function rUsers(el){
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">👤 User Management</div><button class="btn btn-p btn-s" onclick="showUserForm()">+ Add User</button></div>
+  <div class="tb-bar"><input type="text" placeholder="Search users..." id="uSearch" oninput="loadUsers()"><select id="uStatus" onchange="loadUsers()"><option value="">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+  <div id="uTbl"><span class="sp"></span></div>`;await loadUsers()}
+async function loadUsers(){const d=await apiG('/api/v1/users?pageSize=50');allUsers=d?.items||[];$('uTbl').innerHTML=tbl(['User','Email','Role','Status','MFA','Last Login','Actions'],allUsers.map(u=>{const nm=`${u.firstName||''} ${u.lastName||''}`.trim()||'—';return`<td style="font-weight:600"><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${(u.firstName||u.email||'?')[0].toUpperCase()}</div>${nm}</div></td><td>${u.email}</td><td><span class="sb2 ok">${u.roleName||'No Role'}</span></td><td>${badge(u.isActive?'active':'inactive')}</td><td>${u.mfaEnabled?'✅':'—'}</td><td>${u.lastLogin?new Date(u.lastLogin).toLocaleDateString():'Never'}</td><td><button class="btn btn-o btn-s" onclick="showUserForm('${u.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)" onclick="delUser('${u.id}','${u.email}')">Del</button></td>`}),{empty:'No users found. Click "+ Add User" to create one.'})}
+function showUserForm(id){
+  openM(`<div class="modal-hd"><h2>👤 ${id?'Edit':'Add'} User</h2><button class="close" onclick="closeM()">&times;</button></div>
+  <div class="modal-bd"><div class="form-row">
+    ${formInput('First Name *','John','text',true)}
+    ${formInput('Last Name *','Smith','text',true)}
+  </div><div class="form-row">
+    ${formInput('Email ID *','user@company.com','email',true)}
+    ${formInput(id?'New Password (blank = keep)':'Password *','',id?'password':'password',!id)}
+  </div><div class="form-row">
+    ${formSelect('Role *',['Super Admin','Admin','Dispatcher','Viewer'],true)}
+    ${formSelect('Gender',['Male','Female','Other'])}
+  </div><div class="form-row">
+    ${formInput('Phone No.','+91-9876543210','tel')}
+    ${formInput('Date of Birth','')}
+  </div><div class="form-row">
+    ${formInput('Address','')}
+    <div class="fg"><label>Active</label><label class="toggle"><input type="checkbox" checked id="uActive"><span class="sl"></span></label></div>
+  </div></div>
+  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveUser('${id||''}')">Submit</button></div>`);
+}
+async function saveUser(id){const inputs=$('mC').querySelectorAll('input');const sels=$('mC').querySelectorAll('select');const body={firstName:inputs[0].value,lastName:inputs[1].value,email:inputs[2].value,roleName:sels[0].value,phone:inputs[5].value,address:inputs[7].value};if(!id)body.password=inputs[3].value;if(id&&inputs[3].value)body.password=inputs[3].value;const r=await apiP(id?'/api/v1/users/'+id:'/api/v1/users',body);if(r.ok){closeM();loadUsers()}else alert(r.data.title||'Failed')}
+async function delUser(id,email){if(!confirm(`Delete user ${email}?`))return;await apiDel('/api/v1/users/'+id);loadUsers()}
 
-    <h3 style="margin-top: 40px; margin-bottom: 16px; font-size: 22px;">Device Vendors (Pre-Configured)</h3>
-    <table class="cred-table">
-      <thead>
-        <tr><th>Vendor</th><th>Protocol</th><th>Sample Device IDs</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>🇮🇳 iTriangle</td><td>MQTT + TCP</td><td><code>8679590332xxxx</code>, <code>8679590333xxxx</code></td></tr>
-        <tr><td>🇨🇳 Streamax</td><td>MQTT</td><td><code>8634560123xxxx</code>, <code>8634560124xxxx</code></td></tr>
-        <tr><td>🇱🇹 Teltonika</td><td>TCP + MQTT</td><td><code>3520930812xxxx</code>, <code>3520930813xxxx</code></td></tr>
-      </tbody>
-    </table>
-  </section>
+// ─── ROLE & PERMISSIONS (like Form Role Mapping) ───
+async function rRoles(el){
+  const menus=['Command Center','Fleet Intelligence','Trip Planning','Geofence Management','Safety Dashboard','Video Telematics','Device Management','Analytics Dashboard','User Management','System Settings'];
+  el.innerHTML=`<div class="set-card"><h3>🔐 Role & Permission Management</h3>
+  <div class="form-row">
+    ${formSelect('Company',[U.tenantName])}
+    ${formSelect('Role *',[{v:'admin',l:'Super Admin'},{v:'dispatcher',l:'Dispatcher'},{v:'viewer',l:'Viewer'},{v:'driver',l:'Driver'}],true)}
+  </div>
+  <div style="margin-top:16px;overflow-x:auto">
+  <table class="perm-tbl">
+    <thead><tr><th style="text-align:left;padding-left:20px">Menu</th><th style="width:60px">All</th><th style="width:60px">View</th><th style="width:60px">Add</th><th style="width:60px">Edit</th><th style="width:60px">Delete</th></tr></thead>
+    <tbody>${menus.map(m=>`<tr><td style="padding-left:20px">${m}</td><td><input type="checkbox" checked onchange="toggleAll(this)"></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>`).join('')}</tbody>
+  </table></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-o btn-s">Cancel</button><button class="btn btn-p btn-s" onclick="alert('Permissions saved!')">Submit</button></div></div>`;
+}
+function toggleAll(el){const row=el.closest('tr');row.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=el.checked)}
 
-  <!-- PROJECT STRUCTURE -->
-  <section class="section">
-    <h2 class="section-title">Project Structure</h2>
-    <p class="section-sub">110+ production-ready files across Clean Architecture layers.</p>
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 13px; line-height: 1.8; color: var(--muted); overflow-x: auto;">
-      <div><span style="color: var(--accent);">📁 FMS/</span></div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/Domain/</span> — Entities, Interfaces, Value Objects</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/Application/</span> — CQRS Commands/Queries, DTOs, Validators</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/Infrastructure/</span> — EF Core, MongoDB, JWT, Repositories</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/API/</span> — Controllers, Middleware, Program.cs, SeedData</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--warning);">frontend/projects/shell/</span> — Angular Shell + Module Federation Host</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--warning);">frontend/projects/logistics/</span> — Logistics Remote Module</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--danger);">scripts/init-db.sql</span> — PostgreSQL RLS + Indexes</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--danger);">docker-compose.yml</span> — Local Dev Stack (PG, Mongo, Redis, RabbitMQ, MQTT)</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: #ab47bc;">infra/environments/uat/</span> — Terraform for Neon, Render, Vercel</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: #ab47bc;">.github/workflows/ci.yml</span> — CI/CD Pipeline</div>
-      <div>&nbsp;&nbsp;├─ <span style="color: var(--accent);">agent_docs/</span> — 10 Architecture Reference Docs</div>
-      <div>&nbsp;&nbsp;└─ <span style="color: var(--accent);">.claude/</span> — AI Agent Config + Commands</div>
-    </div>
-  </section>
+// ─── FEATURE MANAGEMENT ───
+async function rFeatures(el){
+  el.innerHTML=`<div class="set-card"><h3>🎛️ Feature Management</h3><div id="featList"><span class="sp"></span></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-p btn-s" onclick="alert('Features saved!')">Save Changes</button></div></div>`;
+  const f=await apiG('/api/v1/settings/features');allFeatures=f||[];
+  const modules=[...new Set(allFeatures.map(f=>f.module))];
+  let h='';modules.forEach(m=>{
+    h+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600;margin-bottom:8px;text-transform:capitalize;padding-bottom:4px;border-bottom:1px solid var(--bl)">${m.replace(/-/g,' ')}</div>`;
+    allFeatures.filter(f=>f.module===m).forEach(f=>{
+      h+=`<div class="set-row"><div><div class="label">${f.featureName.replace(/-/g,' ')}</div></div><label class="toggle"><input type="checkbox" ${f.enabled?'checked':''} onchange="toggleFeat('${f.id}',this.checked)"><span class="sl"></span></label></div>`;
+    });h+=`</div>`;
+  });
+  $('featList').innerHTML=h;
+}
+async function toggleFeat(id,en){await apiPut('/api/v1/settings/features/'+id,{enabled:en})}
 
-  <footer>
-    <p>RGBSI Fleet Management System — Multi-Tenant SaaS Platform</p>
-    <p style="margin-top: 4px;">Built with ❤️ using .NET 8, Angular 17+, PostgreSQL, MongoDB, MQTT</p>
-  </footer>
+// ─── SUBSCRIPTION ───
+async function rSubscription(el){
+  el.innerHTML=`<div class="set-card"><h3>💳 Subscription Management</h3>
+  <div class="form-row">
+    ${formSelect('Company *',[U.tenantName],true)}
+    ${formSelect('Package *',[{v:'basic',l:'Basic - 10 vehicles'},{v:'pro',l:'Professional - 50 vehicles'},{v:'enterprise',l:'Enterprise - Unlimited'}],true)}
+  </div><div class="form-row">
+    ${formInput('Subscription From *','','date',true)}
+    ${formInput('Subscription To *','','date',true)}
+  </div><div class="form-row">
+    ${formInput('Invoice No. *','','text',true)}
+    ${formInput('Invoice Date *','','date',true)}
+  </div><div class="form-row">
+    ${formSelect('Payment Mode *',['Online','Cheque','Cash','NEFT','UPI'],true)}
+    ${formInput('Remark','')}
+  </div></div>
+  <div class="set-card"><h3>📋 Subscription History</h3>
+  <div id="subTbl"></div></div>`;
+  $('subTbl').innerHTML=tbl(['Package','From','To','Invoice','Payment','Status'],[
+    `<td><span class="sb2 ok">Professional</span></td><td>2026-01-01</td><td>2026-12-31</td><td>INV-2026-001</td><td>Online</td><td>${badge('active')}</td>`,
+    `<td><span class="sb2 wn">Basic</span></td><td>2025-01-01</td><td>2025-12-31</td><td>INV-2025-001</td><td>Cheque</td><td>${badge('maintenance')}</td>`,
+  ]);
+}
+
+function rPlaceholder(el){const mod=Object.values(NAV).flatMap(m=>m.p).find(p=>p.id===pg);el.innerHTML=`<div class="pg-e"><div class="ic">${mod?.i||'🚧'}</div><div class="ti">${mod?.l||pg}</div><div class="ds">This module is coming soon.</div></div>`}
+
+// ═══ Leaflet Map ═══
+const MC={'Acme Logistics Corp':{c:[19.076,72.8777],z:7},'SafeRide Taxi Services':{c:[40.7128,-74.006],z:12},'Gulf Mining Group':{c:[24.7136,46.6753],z:8}};
+const MK={'Acme Logistics Corp':[{la:19.076,lo:72.8777,n:'MH-01-AB-1234',s:65},{la:18.52,lo:73.86,n:'MH-02-CD-5678',s:0},{la:12.97,lo:77.59,n:'KA-01-GH-3456',s:0},{la:28.61,lo:77.21,n:'DL-01-IJ-7890',s:42}],'SafeRide Taxi Services':[{la:40.76,lo:-73.99,n:'NYC-T-001',s:35},{la:40.73,lo:-73.79,n:'NYC-T-002',s:0},{la:40.69,lo:-74.04,n:'NYC-T-003',s:28}],'Gulf Mining Group':[{la:24.71,lo:46.68,n:'KSA-MINE-01',s:25},{la:24.55,lo:46.38,n:'KSA-MINE-02',s:18},{la:24.63,lo:46.72,n:'KSA-SUP-01',s:60}]};
+function initMap(id,full){const c=document.getElementById(id||'mapC');if(!c)return;if(!full&&map)return;if(map){map.remove();map=null}const tn=U?.tenantName;const cfg=MC[tn]||MC['Acme Logistics Corp'];map=L.map(id||'mapC').setView(cfg.c,cfg.z);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',maxZoom:19}).addTo(map);(MK[tn]||MK['Acme Logistics Corp']).forEach(m=>{const co=m.s>0?'#10b981':'#ef4444';const ic=L.divIcon({className:'',html:`<div style="width:22px;height:22px;background:${co};border:2px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;box-shadow:0 2px 6px rgba(0,0,0,.4)">${m.s>0?'🚛':'⏸️'}</div>`,iconSize:[22,22],iconAnchor:[11,11]});L.marker([m.la,m.lo],{icon:ic}).addTo(map).bindPopup(`<div style="font-family:Inter"><b>${m.n}</b><br>Speed: ${m.s} km/h</div>`)});setTimeout(()=>map.invalidateSize(),100)}
+
+// ═══ Init ═══
+chk();
+const sv=localStorage.getItem('fms_user');if(sv&&localStorage.getItem('fms_token')){try{U=JSON.parse(sv);T=localStorage.getItem('fms_token');showDash()}catch{}}
+</script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 using FMS.Domain.Entities;
 using FMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Route = FMS.Domain.Entities.Route;
 
 namespace FMS.API;
 
@@ -18,10 +19,10 @@ public static class SeedData
         if (await context.Tenants.AnyAsync())
             return;
 
-        Console.WriteLine("[Seed] Seeding sample data for UAT...");
+        Console.WriteLine("[Seed] Seeding comprehensive data for UAT...");
 
         // ==========================================
-        // TENANTS (Multiple companies)
+        // TENANTS
         // ==========================================
         var tenant1Id = Guid.NewGuid();
         var tenant2Id = Guid.NewGuid();
@@ -31,188 +32,161 @@ public static class SeedData
         {
             new()
             {
-                Id = tenant1Id,
-                Name = "Acme Logistics Corp",
-                Subdomain = "acme-logistics",
-                CountryCode = "IN",
-                Timezone = "Asia/Kolkata",
-                Currency = "INR",
-                Plan = "pro",
-                Status = "active",
-                DataResidencyRegion = "ap-south-1",
+                Id = tenant1Id, Name = "Acme Logistics Corp", Subdomain = "acme-logistics",
+                CountryCode = "IN", Timezone = "Asia/Kolkata", Currency = "INR",
+                Plan = "pro", Status = "active", DataResidencyRegion = "ap-south-1",
                 Settings = new Dictionary<string, object>
                 {
-                    ["branding"] = new Dictionary<string, string>
-                    {
-                        ["primaryColor"] = "#1e40af",
-                        ["secondaryColor"] = "#3b82f6",
-                        ["logoUrl"] = "/assets/logos/acme-logo.svg",
-                        ["faviconUrl"] = "/assets/favicon.ico"
-                    },
-                    ["allowedOrigins"] = new[] { "https://acme-logistics.fms-uat.vercel.app" }
+                    ["branding"] = new Dictionary<string, string> { ["primaryColor"] = "#1e40af", ["secondaryColor"] = "#3b82f6" }
                 }
             },
             new()
             {
-                Id = tenant2Id,
-                Name = "SafeRide Taxi Services",
-                Subdomain = "saferide-taxi",
-                CountryCode = "US",
-                Timezone = "America/New_York",
-                Currency = "USD",
-                Plan = "basic",
-                Status = "active",
-                DataResidencyRegion = "us-east-1",
+                Id = tenant2Id, Name = "SafeRide Taxi Services", Subdomain = "saferide-taxi",
+                CountryCode = "US", Timezone = "America/New_York", Currency = "USD",
+                Plan = "basic", Status = "active", DataResidencyRegion = "us-east-1",
                 Settings = new Dictionary<string, object>
                 {
-                    ["branding"] = new Dictionary<string, string>
-                    {
-                        ["primaryColor"] = "#059669",
-                        ["secondaryColor"] = "#10b981",
-                        ["logoUrl"] = "/assets/logos/saferide-logo.svg"
-                    }
+                    ["branding"] = new Dictionary<string, string> { ["primaryColor"] = "#059669", ["secondaryColor"] = "#10b981" }
                 }
             },
             new()
             {
-                Id = tenant3Id,
-                Name = "Gulf Mining Group",
-                Subdomain = "gulf-mining",
-                CountryCode = "SA",
-                Timezone = "Asia/Riyadh",
-                Currency = "SAR",
-                Plan = "enterprise",
-                Status = "active",
-                DataResidencyRegion = "me-south-1",
+                Id = tenant3Id, Name = "Gulf Mining Group", Subdomain = "gulf-mining",
+                CountryCode = "SA", Timezone = "Asia/Riyadh", Currency = "SAR",
+                Plan = "enterprise", Status = "active", DataResidencyRegion = "me-south-1",
                 Settings = new Dictionary<string, object>
                 {
-                    ["branding"] = new Dictionary<string, string>
-                    {
-                        ["primaryColor"] = "#dc2626",
-                        ["secondaryColor"] = "#ef4444",
-                        ["logoUrl"] = "/assets/logos/gulf-logo.svg"
-                    },
-                    ["rtl"] = true
+                    ["branding"] = new Dictionary<string, string> { ["primaryColor"] = "#dc2626", ["secondaryColor"] = "#ef4444" }
                 }
             }
         };
-
         context.Tenants.AddRange(tenants);
         await context.SaveChangesAsync();
 
         // ==========================================
-        // DEVICE VENDORS (Platform-level)
+        // LOOKUPS (Dynamic dropdown values)
+        // ==========================================
+        var lookups = new List<Lookup>();
+
+        // Countries
+        var countryIds = new Dictionary<string, Guid>();
+        foreach (var (code, label, phoneCode) in new[] { ("IN", "India", "+91"), ("US", "United States", "+1"), ("SA", "Saudi Arabia", "+966"), ("AE", "United Arab Emirates", "+971"), ("GB", "United Kingdom", "+44"), ("DE", "Germany", "+49"), ("JP", "Japan", "+81"), ("CN", "China", "+86"), ("BR", "Brazil", "+55"), ("AU", "Australia", "+61") })
+        {
+            var id = Guid.NewGuid();
+            countryIds[code] = id;
+            lookups.Add(new Lookup { Id = id, Category = "Country", Code = code, Label = label, SortOrder = lookups.Count, Metadata = new Dictionary<string, object> { ["phoneCode"] = phoneCode } });
+        }
+
+        // States (India)
+        var stateIds = new Dictionary<string, Guid>();
+        foreach (var (code, label, countryCode) in new[] { ("MH", "Maharashtra", "IN"), ("KA", "Karnataka", "IN"), ("DL", "Delhi", "IN"), ("TN", "Tamil Nadu", "IN"), ("GJ", "Gujarat", "IN"), ("NY", "New York", "US"), ("CA", "California", "US"), ("TX", "Texas", "US"), ("RI", "Riyadh", "SA"), ("MK", "Makkah", "SA") })
+        {
+            var id = Guid.NewGuid();
+            stateIds[code] = id;
+            lookups.Add(new Lookup { Id = id, Category = "State", ParentId = countryIds[countryCode], Code = code, Label = label, SortOrder = lookups.Count });
+        }
+
+        // Cities
+        foreach (var (code, label, stateCode) in new[] { ("MUM", "Mumbai", "MH"), ("PUN", "Pune", "MH"), ("NGP", "Nagpur", "MH"), ("BLR", "Bangalore", "KA"), ("MYS", "Mysore", "KA"), ("DEL", "New Delhi", "DL"), ("CHN", "Chennai", "TN"), ("AHM", "Ahmedabad", "GJ"), ("NYC", "New York City", "NY"), ("LAX", "Los Angeles", "CA"), ("HOU", "Houston", "TX"), ("RUH", "Riyadh", "RI"), ("JED", "Jeddah", "MK") })
+        {
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "City", ParentId = stateIds[stateCode], Code = code, Label = label, SortOrder = lookups.Count });
+        }
+
+        // Vehicle Types
+        foreach (var (code, label) in new[] { ("TRUCK", "Truck"), ("VAN", "Van"), ("SEDAN", "Sedan"), ("SUV", "SUV"), ("TANKER", "Tanker"), ("CONTAINER", "Container"), ("REEFER", "Refrigerated"), ("HEAVY", "Heavy Equipment"), ("BIKE", "Bike"), ("BUS", "Bus"), ("SUPPORT", "Support Vehicle") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "VehicleType", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Fuel Types
+        foreach (var (code, label) in new[] { ("DIESEL", "Diesel"), ("PETROL", "Petrol"), ("CNG", "CNG"), ("LNG", "LNG"), ("ELECTRIC", "Electric"), ("HYBRID", "Hybrid"), ("GASOLINE", "Gasoline") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "FuelType", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Route Types
+        foreach (var (code, label) in new[] { ("FIXED", "Fixed"), ("DYNAMIC", "Dynamic"), ("ROUNDTRIP", "Round Trip"), ("MILKRUN", "Milk Run"), ("EXPRESS", "Express") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "RouteType", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Location Types (for geofences)
+        foreach (var (code, label) in new[] { ("PLANT", "Plant"), ("WAREHOUSE", "Warehouse"), ("CUSTOMER", "Customer Site"), ("YARD", "Yard"), ("PORT", "Port"), ("BORDER", "Border Checkpoint"), ("FUEL_STATION", "Fuel Station"), ("PARKING", "Parking Lot") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "LocationType", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Geofence Colors
+        foreach (var (code, label) in new[] { ("BLUE", "Blue"), ("RED", "Red"), ("GREEN", "Green"), ("YELLOW", "Yellow"), ("ORANGE", "Orange"), ("PURPLE", "Purple"), ("BLACK", "Black") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "GeofenceColor", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Subscription Packages
+        foreach (var (code, label) in new[] { ("BASIC", "Basic"), ("PRO", "Professional"), ("ENTERPRISE", "Enterprise"), ("CUSTOM", "Custom") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "SubscriptionPackage", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Payment Modes
+        foreach (var (code, label) in new[] { ("BANK", "Bank Transfer"), ("CARD", "Credit/Debit Card"), ("CASH", "Cash"), ("CHEQUE", "Cheque"), ("UPI", "UPI"), ("WALLET", "Digital Wallet") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "PaymentMode", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Device Protocols
+        foreach (var (code, label) in new[] { ("TCP", "TCP"), ("MQTT", "MQTT"), ("UDP", "UDP"), ("HTTP", "HTTP"), ("WIALON", "Wialon retarget") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "DeviceProtocol", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Incident Severity
+        foreach (var (code, label) in new[] { ("LOW", "Low"), ("MEDIUM", "Medium"), ("HIGH", "High"), ("CRITICAL", "Critical") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "IncidentSeverity", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Incident Status
+        foreach (var (code, label) in new[] { ("REPORTED", "Reported"), ("INVESTIGATING", "Investigating"), ("RESOLVED", "Resolved"), ("CLOSED", "Closed") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "IncidentStatus", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Delivery Status
+        foreach (var (code, label) in new[] { ("PENDING", "Pending"), ("PICKED_UP", "Picked Up"), ("IN_TRANSIT", "In Transit"), ("OUT_FOR_DELIVERY", "Out for Delivery"), ("DELIVERED", "Delivered"), ("FAILED", "Failed") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "DeliveryStatus", Code = code, Label = label, SortOrder = lookups.Count });
+
+        // Consignee Category
+        foreach (var (code, label) in new[] { ("REGULAR", "Regular"), ("VIP", "VIP"), ("GOVT", "Government"), ("EXPORT", "Export"), ("IMPORT", "Import") })
+            lookups.Add(new Lookup { Id = Guid.NewGuid(), Category = "ConsigneeCategory", Code = code, Label = label, SortOrder = lookups.Count });
+
+        context.Lookups.AddRange(lookups);
+        await context.SaveChangesAsync();
+
+        // ==========================================
+        // DEVICE VENDORS
         // ==========================================
         var vendor1Id = Guid.NewGuid();
         var vendor2Id = Guid.NewGuid();
         var vendor3Id = Guid.NewGuid();
 
-        var vendors = new List<DeviceVendor>
+        context.DeviceVendors.AddRange(new List<DeviceVendor>
         {
-            new()
-            {
-                Id = vendor1Id,
-                Name = "iTriangle Infotech",
-                Code = "itriangle",
-                Protocol = "tcp",
-                DefaultPort = 5001,
-                SupportsVideo = false,
-                SupportsFuel = true,
-                SupportsTemperature = true,
-                SchemaConfig = new Dictionary<string, object>
-                {
-                    ["protocol"] = "tcp",
-                    ["payloadFormat"] = "binary",
-                    ["fieldMapping"] = new Dictionary<string, string>
-                    {
-                        ["latitude"] = "$.gps.lat",
-                        ["longitude"] = "$.gps.lng",
-                        ["speed"] = "$.speed",
-                        ["heading"] = "$.direction",
-                        ["ignition"] = "$.io.ignition",
-                        ["odometer"] = "$.mileage",
-                        ["fuelLevel"] = "$.fuel.level"
-                    }
-                }
-            },
-            new()
-            {
-                Id = vendor2Id,
-                Name = "Streamax Technology",
-                Code = "streamax",
-                Protocol = "mqtt",
-                DefaultPort = 1883,
-                SupportsVideo = true,
-                SupportsFuel = false,
-                SupportsTemperature = false,
-                SchemaConfig = new Dictionary<string, object>
-                {
-                    ["protocol"] = "mqtt",
-                    ["payloadFormat"] = "json",
-                    ["fieldMapping"] = new Dictionary<string, string>
-                    {
-                        ["latitude"] = "$.gps.latitude",
-                        ["longitude"] = "$.gps.longitude",
-                        ["speed"] = "$.vehicle.speed"
-                    },
-                    ["videoChannels"] = 4,
-                    ["videoResolution"] = "1080p"
-                }
-            },
-            new()
-            {
-                Id = vendor3Id,
-                Name = "Teltonika Telematics",
-                Code = "teltonika",
-                Protocol = "tcp",
-                DefaultPort = 5000,
-                SupportsVideo = false,
-                SupportsFuel = true,
-                SupportsTemperature = true,
-                SupportsCanBus = true,
-                SchemaConfig = new Dictionary<string, object>
-                {
-                    ["protocol"] = "tcp",
-                    ["payloadFormat"] = "binary",
-                    ["parser"] = "teltonika_fmc"
-                }
-            }
-        };
-
-        context.DeviceVendors.AddRange(vendors);
+            new() { Id = vendor1Id, Name = "iTriangle Infotech", Code = "itriangle", Protocol = "tcp", DefaultPort = 5001, SupportsFuel = true, SupportsTemperature = true },
+            new() { Id = vendor2Id, Name = "Streamax Technology", Code = "streamax", Protocol = "mqtt", DefaultPort = 1883, SupportsVideo = true },
+            new() { Id = vendor3Id, Name = "Teltonika Telematics", Code = "teltonika", Protocol = "tcp", DefaultPort = 5000, SupportsFuel = true, SupportsTemperature = true, SupportsCanBus = true }
+        });
         await context.SaveChangesAsync();
 
         // ==========================================
-        // USERS (Admin for each tenant)
+        // USERS & ROLES
         // ==========================================
         var adminRoleId1 = Guid.NewGuid();
         var adminRoleId2 = Guid.NewGuid();
         var adminRoleId3 = Guid.NewGuid();
         var driverRoleId = Guid.NewGuid();
 
-        var roles = new List<Role>
+        context.Roles.AddRange(new List<Role>
         {
-            new() { Id = adminRoleId1, TenantId = tenant1Id, Name = "Super Admin", Permissions = new List<string> { "command-center:read", "command-center:write", "fleet-intelligence:read", "fleet-intelligence:write", "trip-logistics:read", "trip-logistics:write", "settings:read", "settings:write", "device-iot:read", "device-iot:write" }, IsSystemRole = true },
-            new() { Id = adminRoleId2, TenantId = tenant2Id, Name = "Super Admin", Permissions = new List<string> { "command-center:read", "command-center:write", "fleet-intelligence:read", "fleet-intelligence:write", "settings:read", "settings:write" }, IsSystemRole = true },
-            new() { Id = adminRoleId3, TenantId = tenant3Id, Name = "Super Admin", Permissions = new List<string> { "command-center:read", "command-center:write", "fleet-intelligence:read", "fleet-intelligence:write", "device-iot:read", "device-iot:write", "settings:read", "settings:write" }, IsSystemRole = true },
+            new() { Id = adminRoleId1, TenantId = tenant1Id, Name = "Super Admin", Permissions = new List<string> { "all" }, IsSystemRole = true },
+            new() { Id = adminRoleId2, TenantId = tenant2Id, Name = "Super Admin", Permissions = new List<string> { "all" }, IsSystemRole = true },
+            new() { Id = adminRoleId3, TenantId = tenant3Id, Name = "Super Admin", Permissions = new List<string> { "all" }, IsSystemRole = true },
             new() { Id = driverRoleId, TenantId = tenant1Id, Name = "Driver", Permissions = new List<string> { "fleet-intelligence:read", "trip-logistics:read" }, IsSystemRole = true }
-        };
+        });
 
-        context.Roles.AddRange(roles);
-
-        var users = new List<User>
+        var userId1 = Guid.NewGuid();
+        context.Users.AddRange(new List<User>
         {
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Email = "admin@acme-logistics.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"), FirstName = "Rajesh", LastName = "Kumar", RoleId = adminRoleId1 },
+            new() { Id = userId1, TenantId = tenant1Id, Email = "admin@acme-logistics.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"), FirstName = "Rajesh", LastName = "Kumar", RoleId = adminRoleId1 },
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Email = "dispatcher@acme-logistics.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Dispatch@123"), FirstName = "Priya", LastName = "Sharma", RoleId = adminRoleId1 },
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, Email = "admin@saferide-taxi.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"), FirstName = "John", LastName = "Smith", RoleId = adminRoleId2 },
             new() { Id = Guid.NewGuid(), TenantId = tenant3Id, Email = "admin@gulf-mining.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"), FirstName = "Ahmed", LastName = "Al-Rashid", RoleId = adminRoleId3 }
-        };
-
-        context.Users.AddRange(users);
+        });
         await context.SaveChangesAsync();
 
         // ==========================================
-        // VEHICLES (Sample fleet for each tenant)
+        // VEHICLES
         // ==========================================
         var vehicles1 = new List<Vehicle>
         {
@@ -222,21 +196,18 @@ public static class SeedData
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VehicleNumber = "KA-01-GH-3456", Type = "Tanker", Model = "Tata Signa 3118T", Year = 2023, FuelType = "Diesel", Status = "maintenance" },
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VehicleNumber = "DL-01-IJ-7890", Type = "Refrigerated", Model = "Eicher Pro 2110", Year = 2024, FuelType = "Diesel", Status = "active" }
         };
-
         var vehicles2 = new List<Vehicle>
         {
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, VehicleNumber = "NYC-T-001", Type = "Sedan", Model = "Toyota Camry Hybrid", Year = 2024, FuelType = "Hybrid", Status = "active" },
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, VehicleNumber = "NYC-T-002", Type = "SUV", Model = "Ford Explorer", Year = 2023, FuelType = "Gasoline", Status = "active" },
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, VehicleNumber = "NYC-T-003", Type = "Sedan", Model = "Honda Accord", Year = 2024, FuelType = "Gasoline", Status = "active" }
         };
-
         var vehicles3 = new List<Vehicle>
         {
             new() { Id = Guid.NewGuid(), TenantId = tenant3Id, VehicleNumber = "KSA-MINE-01", Type = "Heavy Equipment", Model = "CAT 785D Mining Truck", Year = 2022, FuelType = "Diesel", Status = "active" },
             new() { Id = Guid.NewGuid(), TenantId = tenant3Id, VehicleNumber = "KSA-MINE-02", Type = "Heavy Equipment", Model = "Komatsu HD785-7", Year = 2023, FuelType = "Diesel", Status = "active" },
             new() { Id = Guid.NewGuid(), TenantId = tenant3Id, VehicleNumber = "KSA-SUP-01", Type = "Support Vehicle", Model = "Toyota Land Cruiser", Year = 2024, FuelType = "Diesel", Status = "active" }
         };
-
         context.Vehicles.AddRange(vehicles1);
         context.Vehicles.AddRange(vehicles2);
         context.Vehicles.AddRange(vehicles3);
@@ -245,50 +216,113 @@ public static class SeedData
         // ==========================================
         // DRIVERS
         // ==========================================
-        var drivers = new List<Driver>
+        context.Drivers.AddRange(new List<Driver>
         {
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, FirstName = "Suresh", LastName = "Patil", LicenseNumber = "MH-DRV-001", LicenseExpiry = DateTime.UtcNow.AddYears(2), Phone = "+91-9876543210", BehaviorScore = 87.5m, Status = "active" },
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, FirstName = "Vikram", LastName = "Singh", LicenseNumber = "MH-DRV-002", LicenseExpiry = DateTime.UtcNow.AddYears(1), Phone = "+91-9876543211", BehaviorScore = 92.3m, Status = "active" },
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, FirstName = "Manoj", LastName = "Joshi", LicenseNumber = "KA-DRV-001", LicenseExpiry = DateTime.UtcNow.AddMonths(8), Phone = "+91-9876543212", BehaviorScore = 78.1m, Status = "active" },
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, FirstName = "Arun", LastName = "Desai", LicenseNumber = "DL-DRV-001", LicenseExpiry = DateTime.UtcNow.AddYears(3), Phone = "+91-9876543213", BehaviorScore = 95.0m, Status = "active" },
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, FirstName = "Michael", LastName = "Johnson", LicenseNumber = "NY-CDL-001", LicenseExpiry = DateTime.UtcNow.AddYears(2), Phone = "+1-555-0101", BehaviorScore = 88.7m, Status = "active" },
-            new() { Id = Guid.NewGuid(), TenantId = tenant2Id, FirstName = "Sarah", LastName = "Williams", LicenseNumber = "NY-CDL-002", LicenseExpiry = DateTime.UtcNow.AddYears(1), Phone = "+1-555-0102", BehaviorScore = 91.2m, Status = "active" },
             new() { Id = Guid.NewGuid(), TenantId = tenant3Id, FirstName = "Mohammed", LastName = "Al-Farsi", LicenseNumber = "SA-DRV-001", LicenseExpiry = DateTime.UtcNow.AddYears(1), Phone = "+966-501234567", BehaviorScore = 85.6m, Status = "active" }
-        };
-
-        context.Drivers.AddRange(drivers);
+        });
         await context.SaveChangesAsync();
 
         // ==========================================
-        // DEVICES (GPS units assigned to vehicles)
+        // FORM MASTERS (System pages for RBAC)
         // ==========================================
-        var devices = new List<Device>
+        var formMasters = new List<FormMaster>();
+        var formNames = new[]
         {
-            // Acme Logistics devices
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VendorId = vendor1Id, Imei = "867959033200001", SerialNumber = "IT-VT300-001", Model = "iTriangle VT300", VehicleId = vehicles1[0].Id, DriverId = drivers[0].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-2), LastSpeed = 65.5m, SignalStrength = -75, BatteryLevel = 87 },
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VendorId = vendor1Id, Imei = "867959033200002", SerialNumber = "IT-VT300-002", Model = "iTriangle VT300", VehicleId = vehicles1[1].Id, DriverId = drivers[1].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-5), LastSpeed = 0m, SignalStrength = -82, BatteryLevel = 92 },
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VendorId = vendor2Id, Imei = "863456012300001", SerialNumber = "ST-X1-001", Model = "Streamax X1", VehicleId = vehicles1[2].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-1), SignalStrength = -68, BatteryLevel = 100 },
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VendorId = vendor3Id, Imei = "352093081200001", SerialNumber = "TL-FMC130-001", Model = "Teltonika FMC130", VehicleId = vehicles1[3].Id, DriverId = drivers[2].Id, Status = "offline", LastSeen = DateTime.UtcNow.AddHours(-2), SignalStrength = null, BatteryLevel = 45 },
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VendorId = vendor1Id, Imei = "867959033200003", SerialNumber = "IT-VT300-003", Model = "iTriangle VT300", VehicleId = vehicles1[4].Id, DriverId = drivers[3].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-3), LastSpeed = 42.0m, SignalStrength = -71, BatteryLevel = 78 },
-
-            // SafeRide Taxi devices
-            new() { Id = Guid.NewGuid(), TenantId = tenant2Id, VendorId = vendor3Id, Imei = "352093081200002", SerialNumber = "TL-FMC600-001", Model = "Teltonika FMC600", VehicleId = vehicles2[0].Id, DriverId = drivers[4].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-1), LastSpeed = 35.0m, SignalStrength = -65, BatteryLevel = 95 },
-            new() { Id = Guid.NewGuid(), TenantId = tenant2Id, VendorId = vendor2Id, Imei = "863456012300002", SerialNumber = "ST-CM32-001", Model = "Streamax CM32", VehicleId = vehicles2[1].Id, DriverId = drivers[5].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-2), SignalStrength = -70, BatteryLevel = 100 },
-
-            // Gulf Mining devices
-            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, VendorId = vendor3Id, Imei = "352093081200003", SerialNumber = "TL-FMC600-002", Model = "Teltonika FMC600", VehicleId = vehicles3[0].Id, DriverId = drivers[6].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-1), LastSpeed = 25.0m, SignalStrength = -78, BatteryLevel = 88 },
-            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, VendorId = vendor1Id, Imei = "867959033200004", SerialNumber = "IT-VT300-004", Model = "iTriangle VT300", VehicleId = vehicles3[1].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-3), LastSpeed = 18.5m, SignalStrength = -80, BatteryLevel = 72 }
+            ("Dashboard", "HomeController", "Index", "Web"),
+            ("AI Safety Dashboard", "SafetyController", "AiDashboard", "Web"),
+            ("Analytics Dashboard", "AnalyticsController", "Dashboard", "Web"),
+            ("Area Performance", "AnalyticsController", "AreaPerformance", "Web"),
+            ("ATMS Customer Dashboard", "AtmsController", "CustomerDashboard", "Web"),
+            ("ATMS Trip Dashboard", "AtmsController", "TripDashboard", "Web"),
+            ("Attendance Dashboard", "AttendanceController", "Dashboard", "Web"),
+            ("CCTV Video Wall", "VideoController", "Wall", "Web"),
+            ("Cloud Video Playback", "VideoController", "Playback", "Web"),
+            ("Command Center", "CommandCenter", "Index", "Web"),
+            ("Compliance Dashboard", "ComplianceController", "Dashboard", "Web"),
+            ("CTMS Trip Dashboard", "CtmsController", "TripDashboard", "Web"),
+            ("Customer Dashboard", "CustomerController", "Dashboard", "Web"),
+            ("Dashboard Data Detail", "DashboardController", "DataDetail", "Web"),
+            ("Detail Dashboard", "DashboardController", "Detail", "Web"),
+            ("Fleet Management System", "FleetController", "Index", "Web"),
+            ("Incident Center", "SafetyController", "Incidents", "Web"),
+            ("Live Fleet Map", "MapController", "Live", "Web"),
+            ("Maintenance Studio", "MaintenanceController", "Index", "Web"),
+            ("Notification Center", "NotificationController", "Index", "Web"),
+            ("Operations Overview", "CommandCenter", "Overview", "Web"),
+            ("OBD Dashboard", "ObdController", "Dashboard", "Web"),
+            ("Reports", "ReportsController", "Index", "Web"),
+            ("Route Management", "RouteController", "Index", "Web"),
+            ("Geofence Management", "GeofenceController", "Index", "Web"),
+            ("Settings", "SettingsController", "Index", "Web"),
+            ("Track on Map", "MapController", "Track", "Web"),
+            ("Transport Management System", "TransportController", "Index", "Web"),
+            ("User Management", "UserController", "Index", "Web"),
+            ("Vehicle Directory", "FleetController", "Vehicles", "Web"),
+            ("Driver Hub", "FleetController", "Drivers", "Web"),
+            ("Device Fleet", "DeviceController", "Index", "Web"),
+            ("Client Management", "ClientController", "Index", "Web"),
+            ("Subscription Management", "SubscriptionController", "Index", "Web"),
+            ("Role Permissions", "RbacController", "RolePermissions", "Web"),
+            ("Form Company Mapping", "RbacController", "CompanyMapping", "Web"),
+            ("Form Column Config", "RbacController", "ColumnConfig", "Web"),
+            ("Lookup Management", "LookupController", "Index", "Web"),
+            ("Fuel Analytics", "FleetController", "FuelAnalytics", "Web"),
+            ("Trip Planner", "TripController", "Planner", "Web"),
+            ("Active Deliveries", "TripController", "Deliveries", "Web"),
+            ("Yard & Dock", "YardController", "Index", "Web"),
+            ("Video Telematics", "SafetyController", "Video", "Web"),
+            ("Insight Builder", "AnalyticsController", "Insights", "Web")
         };
 
-        context.Devices.AddRange(devices);
+        foreach (var (name, controller, action, platform) in formNames)
+        {
+            var id = Guid.NewGuid();
+            formMasters.Add(new FormMaster { Id = id, FormName = name, ControllerName = controller, ActionName = action, Platform = platform, IsActive = true, CreatedAt = DateTime.UtcNow });
+        }
+        context.FormMasters.AddRange(formMasters);
         await context.SaveChangesAsync();
 
         // ==========================================
-        // FEATURES (Enable sectors per tenant)
+        // FORM ROLE MAPPING (All forms → Super Admin for all tenants)
         // ==========================================
-        var features = new List<Feature>
+        foreach (var roleId in new[] { adminRoleId1, adminRoleId2, adminRoleId3 })
         {
-            // Acme Logistics: Logistics + Fleet Intelligence + Safety + Analytics
+            var tenantId = roleId == adminRoleId1 ? tenant1Id : roleId == adminRoleId2 ? tenant2Id : tenant3Id;
+            foreach (var form in formMasters)
+            {
+                context.FormRoleMappings.Add(new FormRoleMapping
+                {
+                    Id = Guid.NewGuid(), TenantId = tenantId, RoleId = roleId, FormId = form.Id,
+                    CanView = true, CanAdd = true, CanEdit = true, CanDelete = true, CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
+        // ==========================================
+        // FORM COMPANY MAPPING (Enable all forms for all tenants)
+        // ==========================================
+        foreach (var tid in new[] { tenant1Id, tenant2Id, tenant3Id })
+        {
+            foreach (var form in formMasters)
+            {
+                context.FormCompanyMappings.Add(new FormCompanyMapping
+                {
+                    Id = Guid.NewGuid(), TenantId = tid, FormId = form.Id,
+                    IsEnabled = true, CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
+        // ==========================================
+        // FEATURES
+        // ==========================================
+        context.Features.AddRange(new List<Feature>
+        {
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Module = "fleet-intelligence", FeatureName = "vehicle-directory", Enabled = true },
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Module = "fleet-intelligence", FeatureName = "driver-hub", Enabled = true },
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Module = "fleet-intelligence", FeatureName = "fuel-analytics", Enabled = true },
@@ -300,99 +334,73 @@ public static class SeedData
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Module = "safety-compliance", FeatureName = "incident-center", Enabled = true },
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Module = "analytics", FeatureName = "insight-builder", Enabled = true },
             new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Module = "device-iot", FeatureName = "device-fleet", Enabled = true },
-
-            // SafeRide Taxi: Fleet Intelligence + Command Center
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, Module = "fleet-intelligence", FeatureName = "vehicle-directory", Enabled = true },
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, Module = "fleet-intelligence", FeatureName = "driver-hub", Enabled = true },
             new() { Id = Guid.NewGuid(), TenantId = tenant2Id, Module = "command-center", FeatureName = "operations-overview", Enabled = true },
-            new() { Id = Guid.NewGuid(), TenantId = tenant2Id, Module = "command-center", FeatureName = "live-fleet-map", Enabled = true },
-
-            // Gulf Mining: Fleet + Device + Safety
             new() { Id = Guid.NewGuid(), TenantId = tenant3Id, Module = "fleet-intelligence", FeatureName = "vehicle-directory", Enabled = true },
-            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, Module = "fleet-intelligence", FeatureName = "fuel-analytics", Enabled = true },
-            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, Module = "device-iot", FeatureName = "device-fleet", Enabled = true },
-            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, Module = "safety-compliance", FeatureName = "incident-center", Enabled = true }
-        };
-
-        context.Features.AddRange(features);
+            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, Module = "device-iot", FeatureName = "device-fleet", Enabled = true }
+        });
 
         // ==========================================
-        // DEVICE COMMANDS (Recent command history)
+        // CLIENTS (Sample data for Acme)
         // ==========================================
-        var commands = new List<DeviceCommand>
+        context.Clients.AddRange(new List<Client>
         {
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, DeviceId = devices[0].Id, CommandType = "poll", Status = "acknowledged", SentAt = DateTime.UtcNow.AddMinutes(-10), AcknowledgedAt = DateTime.UtcNow.AddMinutes(-9) },
-            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, DeviceId = devices[3].Id, CommandType = "poll", Status = "failed", ErrorMessage = "Device offline", SentAt = DateTime.UtcNow.AddMinutes(-5) }
-        };
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, ClientName = "Reliance Industries", ClientCode = "REL-001", CompanyName = "Reliance Industries Ltd", Address = "Maker Chambers IV, Nariman Point", CountryId = countryIds["IN"], StateId = stateIds["MH"], CityId = lookups.First(l => l.Code == "MUM").Id, ContactPerson = "Amit Patel", ContactNo = "+91-22-22785000", MobileNo = "+91-9820012345", EmailId = "amit.patel@ril.com", GstNo = "27AABCR1234M1Z5", IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, ClientName = "Tata Motors", ClientCode = "TML-001", CompanyName = "Tata Motors Ltd", Address = "Bombay House, Homi Mody Street", CountryId = countryIds["IN"], StateId = stateIds["MH"], CityId = lookups.First(l => l.Code == "MUM").Id, ContactPerson = "Sanjay Mehta", ContactNo = "+91-22-66657000", MobileNo = "+91-9820098765", EmailId = "sanjay@tatamotors.com", IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, ClientName = "Amazon India", ClientCode = "AMZ-001", CompanyName = "Amazon Seller Services Pvt Ltd", Address = "Embassy Tech Village, Outer Ring Road", CountryId = countryIds["IN"], StateId = stateIds["KA"], CityId = lookups.First(l => l.Code == "BLR").Id, ContactPerson = "Deepak Nair", ContactNo = "+91-80-41970000", MobileNo = "+91-9900112233", EmailId = "deepak@amazon.in", IsActive = true }
+        });
 
-        context.DeviceCommands.AddRange(commands);
+        // ==========================================
+        // ROUTES (Sample for Acme)
+        // ==========================================
+        context.Routes.AddRange(new List<Route>
+        {
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, RouteName = "Mumbai-Pune Express", StartLocation = "Mumbai, Maharashtra", EndLocation = "Pune, Maharashtra", StartLatitude = 19.0760m, StartLongitude = 72.8777m, EndLatitude = 18.5204m, EndLongitude = 73.8567m, DistanceKm = 149.0m, EstimatedDurationMin = 180, IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, RouteName = "Delhi-Jaipur Highway", StartLocation = "New Delhi", EndLocation = "Jaipur, Rajasthan", StartLatitude = 28.6139m, StartLongitude = 77.2090m, EndLatitude = 26.9124m, EndLongitude = 75.7873m, DistanceKm = 281.0m, EstimatedDurationMin = 300, IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, RouteName = "Bangalore-Chennai Corridor", StartLocation = "Bangalore, Karnataka", EndLocation = "Chennai, Tamil Nadu", StartLatitude = 12.9716m, StartLongitude = 77.5946m, EndLatitude = 13.0827m, EndLongitude = 80.2707m, DistanceKm = 346.0m, EstimatedDurationMin = 390, IsActive = true }
+        });
+
+        // ==========================================
+        // GEOFENCES (Sample for Acme)
+        // ==========================================
+        context.Geofences.AddRange(new List<Geofence>
+        {
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Name = "Mumbai Warehouse", Address = "Nhava Sheva, Navi Mumbai", Latitude = 18.9498m, Longitude = 72.9427m, RadiusMeters = 500m, Color = "Blue", IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Name = "Pune Distribution Center", Address = "Pimpri-Chinchwad, Pune", Latitude = 18.6492m, Longitude = 73.8314m, RadiusMeters = 750m, Color = "Green", IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Name = "Delhi Border Checkpoint", Address = "Delhi-Gurgaon Border", Latitude = 28.4595m, Longitude = 77.0266m, RadiusMeters = 300m, Color = "Red", IsActive = true }
+        });
+
+        // ==========================================
+        // SUBSCRIPTIONS (Sample)
+        // ==========================================
+        context.Subscriptions.AddRange(new List<Subscription>
+        {
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, PackageName = "Professional", SubscriptionFrom = new DateOnly(2024, 1, 1), SubscriptionTo = new DateOnly(2025, 12, 31), InvoiceNo = "INV-2024-001", InvoiceDate = new DateOnly(2024, 1, 5), IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant2Id, PackageName = "Basic", SubscriptionFrom = new DateOnly(2024, 6, 1), SubscriptionTo = new DateOnly(2025, 5, 31), InvoiceNo = "INV-2024-042", InvoiceDate = new DateOnly(2024, 6, 10), IsActive = true },
+            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, PackageName = "Enterprise", SubscriptionFrom = new DateOnly(2024, 3, 1), SubscriptionTo = new DateOnly(2027, 2, 28), InvoiceNo = "INV-2024-089", InvoiceDate = new DateOnly(2024, 3, 15), IsActive = true }
+        });
+
+        // ==========================================
+        // DEVICES
+        // ==========================================
+        context.Devices.AddRange(new List<Device>
+        {
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VendorId = vendor1Id, Imei = "867959033200001", SerialNumber = "IT-VT300-001", Model = "iTriangle VT300", VehicleId = vehicles1[0].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-2), LastSpeed = 65.5m, SignalStrength = -75, BatteryLevel = 87 },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, VendorId = vendor1Id, Imei = "867959033200002", SerialNumber = "IT-VT300-002", Model = "iTriangle VT300", VehicleId = vehicles1[1].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-5), LastSpeed = 0m, SignalStrength = -82, BatteryLevel = 92 },
+            new() { Id = Guid.NewGuid(), TenantId = tenant2Id, VendorId = vendor3Id, Imei = "352093081200002", SerialNumber = "TL-FMC600-001", Model = "Teltonika FMC600", VehicleId = vehicles2[0].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-1), LastSpeed = 35.0m, SignalStrength = -65, BatteryLevel = 95 },
+            new() { Id = Guid.NewGuid(), TenantId = tenant3Id, VendorId = vendor3Id, Imei = "352093081200003", SerialNumber = "TL-FMC600-002", Model = "Teltonika FMC600", VehicleId = vehicles3[0].Id, Status = "active", LastSeen = DateTime.UtcNow.AddMinutes(-1), LastSpeed = 25.0m, SignalStrength = -78, BatteryLevel = 88 }
+        });
 
         await context.SaveChangesAsync();
 
-        // ==========================================
-        // USER PREFERENCES (Default table configs)
-        // ==========================================
-        var userId1 = context.Users.First(u => u.TenantId == tenant1Id && u.Email == "admin@acme-logistics.com").Id;
-
-        var preferences = new List<UserPreference>
-        {
-            new()
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId1,
-                Page = "vehicle-directory",
-                PreferenceType = "table-columns",
-                Config = new Dictionary<string, object>
-                {
-                    ["columns"] = new List<Dictionary<string, object>>
-                    {
-                        new() { ["field"] = "vehicleNumber", ["header"] = "Vehicle #", ["visible"] = true, ["width"] = 150, ["order"] = 1 },
-                        new() { ["field"] = "type", ["header"] = "Type", ["visible"] = true, ["width"] = 120, ["order"] = 2 },
-                        new() { ["field"] = "model", ["header"] = "Model", ["visible"] = true, ["width"] = 200, ["order"] = 3 },
-                        new() { ["field"] = "status", ["header"] = "Status", ["visible"] = true, ["width"] = 100, ["order"] = 4 },
-                        new() { ["field"] = "fuelType", ["header"] = "Fuel", ["visible"] = true, ["width"] = 80, ["order"] = 5 },
-                        new() { ["field"] = "year", ["header"] = "Year", ["visible"] = false, ["width"] = 80, ["order"] = 6 }
-                    },
-                    ["pageSize"] = 25,
-                    ["defaultSort"] = new Dictionary<string, string> { ["field"] = "vehicleNumber", ["direction"] = "asc" }
-                }
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId1,
-                Page = "driver-hub",
-                PreferenceType = "table-columns",
-                Config = new Dictionary<string, object>
-                {
-                    ["columns"] = new List<Dictionary<string, object>>
-                    {
-                        new() { ["field"] = "name", ["header"] = "Driver Name", ["visible"] = true, ["width"] = 200, ["order"] = 1 },
-                        new() { ["field"] = "licenseNumber", ["header"] = "License #", ["visible"] = true, ["width"] = 150, ["order"] = 2 },
-                        new() { ["field"] = "behaviorScore", ["header"] = "Score", ["visible"] = true, ["width"] = 100, ["order"] = 3 },
-                        new() { ["field"] = "phone", ["header"] = "Phone", ["visible"] = true, ["width"] = 140, ["order"] = 4 },
-                        new() { ["field"] = "status", ["header"] = "Status", ["visible"] = true, ["width"] = 100, ["order"] = 5 }
-                    }
-                }
-            }
-        };
-
-        context.UserPreferences.AddRange(preferences);
-        await context.SaveChangesAsync();
-
-        Console.WriteLine("[Seed] ✅ Sample data seeded successfully!");
-        Console.WriteLine($"[Seed]   Tenant 1: {tenants[0].Name} (subdomain: {tenants[0].Subdomain})");
-        Console.WriteLine($"[Seed]   Tenant 2: {tenants[1].Name} (subdomain: {tenants[1].Subdomain})");
-        Console.WriteLine($"[Seed]   Tenant 3: {tenants[2].Name} (subdomain: {tenants[2].Subdomain})");
-        Console.WriteLine($"[Seed]   Vendors:  {vendors.Count} device vendors registered");
-        Console.WriteLine($"[Seed]   Vehicles: {vehicles1.Count + vehicles2.Count + vehicles3.Count} total");
-        Console.WriteLine($"[Seed]   Drivers:  {drivers.Count} total");
-        Console.WriteLine($"[Seed]   Devices:  {devices.Count} total");
-        Console.WriteLine($"[Seed]   Features: {features.Count} module features enabled");
-        Console.WriteLine();
-        Console.WriteLine("[Seed] UAT Login Credentials:");
-        Console.WriteLine($"[Seed]   Admin (Acme):    admin@acme-logistics.com / Admin@123");
-        Console.WriteLine($"[Seed]   Admin (SafeRide): admin@saferide-taxi.com / Admin@123");
-        Console.WriteLine($"[Seed]   Admin (Gulf):    admin@gulf-mining.com / Admin@123");
+        Console.WriteLine("[Seed] ✅ Comprehensive data seeded successfully!");
+        Console.WriteLine($"[Seed]   Tenants: {tenants.Count}");
+        Console.WriteLine($"[Seed]   Lookups: {lookups.Count} values across {lookups.Select(l => l.Category).Distinct().Count()} categories");
+        Console.WriteLine($"[Seed]   Forms: {formMasters.Count} system pages registered");
+        Console.WriteLine($"[Seed]   Vehicles: {vehicles1.Count + vehicles2.Count + vehicles3.Count}");
+        Console.WriteLine("[Seed] Login: admin@acme-logistics.com / Admin@123");
+        Console.WriteLine("[Seed] Login: admin@saferide-taxi.com / Admin@123");
+        Console.WriteLine("[Seed] Login: admin@gulf-mining.com / Admin@123");
     }
 }
