@@ -1,5 +1,7 @@
 using FMS.API;
+using FMS.API.Services;
 using FMS.Application;
+using FMS.Application.Common.Interfaces;
 using FMS.Infrastructure;
 using FMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +52,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
