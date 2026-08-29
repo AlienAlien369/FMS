@@ -116,8 +116,146 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<FmsDbContext>();
+        
+        // Try EnsureCreated first (works for new DBs)
         await db.Database.EnsureCreatedAsync();
         Console.WriteLine("✅ Database schema created/verified");
+        
+        // For existing DBs, create missing tables via raw SQL
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'lookups') THEN
+    CREATE TABLE lookups (
+      id UUID PRIMARY KEY, category VARCHAR(50) NOT NULL, parent_id UUID REFERENCES lookups(id),
+      code VARCHAR(20) NOT NULL, label VARCHAR(100) NOT NULL, sort_order INT DEFAULT 0,
+      is_active BOOLEAN DEFAULT true, metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE INDEX idx_lookups_category ON lookups(category);
+    CREATE INDEX idx_lookups_parent ON lookups(parent_id);
+    CREATE UNIQUE INDEX idx_lookups_cat_code ON lookups(category, code);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'clients') THEN
+    CREATE TABLE clients (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      parent_client_id UUID, company_name VARCHAR(200), client_name VARCHAR(200) NOT NULL,
+      client_code VARCHAR(50) NOT NULL, address TEXT, pin_code VARCHAR(20),
+      country_id UUID, state_id UUID, city_id UUID,
+      latitude DECIMAL(10,7), longitude DECIMAL(10,7),
+      billing_address_same BOOLEAN DEFAULT false, billing_address TEXT, billing_pin_code VARCHAR(20),
+      billing_country_id UUID, billing_state_id UUID, billing_city_id UUID,
+      company_phone VARCHAR(20), contact_person VARCHAR(100), contact_no VARCHAR(20),
+      alt_contact_no VARCHAR(20), contact_email VARCHAR(100), mobile_no VARCHAR(20),
+      email_id VARCHAR(100), alt_email_id VARCHAR(100), pan_no VARCHAR(20),
+      gst_no VARCHAR(30), cin_no VARCHAR(30), consignee_category_id UUID,
+      is_contract_signed BOOLEAN DEFAULT false, is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE INDEX idx_clients_tenant ON clients(tenant_id);
+    CREATE UNIQUE INDEX idx_clients_tenant_code ON clients(tenant_id, client_code);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_masters') THEN
+    CREATE TABLE form_masters (
+      id UUID PRIMARY KEY, form_name VARCHAR(100) NOT NULL,
+      controller_name VARCHAR(100) NOT NULL, action_name VARCHAR(100) NOT NULL,
+      class_name VARCHAR(100), parent_form_id UUID, area_name VARCHAR(50),
+      platform VARCHAR(20) DEFAULT 'Web', is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE UNIQUE INDEX idx_forms_name ON form_masters(form_name);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'routes') THEN
+    CREATE TABLE routes (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      route_name VARCHAR(100) NOT NULL, start_location VARCHAR(200) NOT NULL,
+      end_location VARCHAR(200) NOT NULL, start_latitude DECIMAL(10,7), start_longitude DECIMAL(10,7),
+      end_latitude DECIMAL(10,7), end_longitude DECIMAL(10,7),
+      waypoints JSONB DEFAULT '[]', route_type_id UUID, distance_km DECIMAL(10,2),
+      estimated_duration_min INT, is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE INDEX idx_routes_tenant ON routes(tenant_id);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'geofences') THEN
+    CREATE TABLE geofences (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      name VARCHAR(100) NOT NULL, location_type_id UUID, address VARCHAR(200),
+      latitude DECIMAL(10,7) NOT NULL, longitude DECIMAL(10,7) NOT NULL,
+      radius_meters DECIMAL(10,2) NOT NULL, color VARCHAR(20) DEFAULT 'Blue',
+      is_active BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE INDEX idx_geofences_tenant ON geofences(tenant_id);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'subscriptions') THEN
+    CREATE TABLE subscriptions (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      package_name VARCHAR(100) NOT NULL, subscription_from DATE NOT NULL,
+      subscription_to DATE NOT NULL, invoice_no VARCHAR(50) NOT NULL,
+      invoice_date DATE NOT NULL, payment_mode_id UUID, remark TEXT,
+      is_active BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE INDEX idx_subscriptions_tenant ON subscriptions(tenant_id);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_role_mappings') THEN
+    CREATE TABLE form_role_mappings (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      role_id UUID NOT NULL, form_id UUID NOT NULL,
+      can_view BOOLEAN DEFAULT false, can_add BOOLEAN DEFAULT false,
+      can_edit BOOLEAN DEFAULT false, can_delete BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE UNIQUE INDEX idx_frm_tenant_role_form ON form_role_mappings(tenant_id, role_id, form_id);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_company_mappings') THEN
+    CREATE TABLE form_company_mappings (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      form_id UUID NOT NULL, is_enabled BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE UNIQUE INDEX idx_fcm_tenant_form ON form_company_mappings(tenant_id, form_id);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_column_configs') THEN
+    CREATE TABLE form_column_configs (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      form_id UUID NOT NULL, column_name VARCHAR(100) NOT NULL,
+      display_name VARCHAR(100) NOT NULL, is_active BOOLEAN DEFAULT true,
+      sort_order INT DEFAULT 0, created_at TIMESTAMPTZ DEFAULT NOW());
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'notifications') THEN
+    CREATE TABLE notifications (
+      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
+      user_id UUID NOT NULL REFERENCES users(id), title VARCHAR(200) NOT NULL,
+      message TEXT NOT NULL, type VARCHAR(50) NOT NULL, is_read BOOLEAN DEFAULT false,
+      link VARCHAR(500), created_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE INDEX idx_notifications_user_read ON notifications(user_id, is_read);
+  END IF;
+END $$;
+";
+        await cmd.ExecuteNonQueryAsync();
+        await conn.CloseAsync();
+        Console.WriteLine("✅ New tables created (if missing)");
     }
 
     await SeedData.SeedAsync(app.Services);
