@@ -8,20 +8,17 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add layers
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+// ─────────────────────────────────────────────────────────────
+// 1. Parse DATABASE_URL BEFORE DI registrations (critical!)
+//    AddInfrastructure registers FmsDbContext with the connection
+//    string at registration time, so the value must be set first.
+// ─────────────────────────────────────────────────────────────
 
-// Override connection string from DATABASE_URL env var (Render/Neon provides this)
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 if (!string.IsNullOrEmpty(databaseUrl))
 {
     Console.WriteLine($"[DB] DATABASE_URL found (length={databaseUrl.Length})");
 
-    // Neon/Render provides postgres:// or postgresql:// URLs
-    // EF Core Npgsql needs Npgsql-format connection string
-
-    // Parse the URL and build a proper Npgsql connection string
     try
     {
         var uri = new Uri(databaseUrl);
@@ -44,7 +41,6 @@ if (!string.IsNullOrEmpty(databaseUrl))
             }
         }
 
-        // Ensure sslmode is set
         if (!queryParams.ContainsKey("sslmode"))
             queryParams["sslmode"] = "require";
 
@@ -54,18 +50,16 @@ if (!string.IsNullOrEmpty(databaseUrl))
     }
     catch (Exception ex)
     {
-        // Fallback: try to use the URL directly with basic fixes
-        Console.WriteLine($"[DB] URI parse failed: {ex.Message}, trying raw URL");
+        Console.WriteLine($"[DB] URI parse failed: {ex.Message}");
+        // Use raw URL as fallback
         if (!databaseUrl.Contains("sslmode"))
-        {
             databaseUrl += databaseUrl.Contains("?") ? "&sslmode=require" : "?sslmode=require";
-        }
         builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
     }
 }
 else
 {
-    Console.WriteLine("[DB] No DATABASE_URL found, using config");
+    Console.WriteLine("[DB] No DATABASE_URL found, using config defaults");
 }
 
 // JWT Secret from env var
@@ -76,6 +70,12 @@ if (!string.IsNullOrEmpty(jwtSecret))
     builder.Configuration["Jwt:Issuer"] = "FMS";
     builder.Configuration["Jwt:Audience"] = "FMS";
 }
+
+// ─────────────────────────────────────────────────────────────
+// 2. Register services (now reads the parsed connection string)
+// ─────────────────────────────────────────────────────────────
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // CORS for Angular
 builder.Services.AddCors(options =>
@@ -117,7 +117,6 @@ try
         Console.WriteLine("✅ Database schema created/verified");
     }
 
-    // Seed sample tenants, users, vehicles, etc.
     await SeedData.SeedAsync(app.Services);
 }
 catch (Exception ex)
@@ -127,7 +126,7 @@ catch (Exception ex)
     Console.WriteLine("   App will continue without database — health check will report unhealthy");
 }
 
-// Enable Swagger in all environments for API documentation
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -137,7 +136,7 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("FmsCors");
 
-// Global exception handler for proper error responses
+// Global exception handler
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
