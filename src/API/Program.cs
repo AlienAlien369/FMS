@@ -125,22 +125,26 @@ try
         var conn = db.Database.GetDbConnection();
         await conn.OpenAsync();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
+        // Helper: escape double quotes for C# verbatim strings
+        string Q(string name) => name.Replace("\"", "\"\"");
+        string T(string t) => $"\"{Q(t)}\"";
+        
+        var sql = $@"
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'lookups') THEN
-    CREATE TABLE lookups (
-      id UUID PRIMARY KEY, category VARCHAR(50) NOT NULL, parent_id UUID REFERENCES lookups(id),
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Lookups') THEN
+    CREATE TABLE {T("Lookups")} (
+      id UUID PRIMARY KEY, category VARCHAR(50) NOT NULL, parent_id UUID REFERENCES {T("Lookups")}(id),
       code VARCHAR(20) NOT NULL, label VARCHAR(100) NOT NULL, sort_order INT DEFAULT 0,
-      is_active BOOLEAN DEFAULT true, metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_lookups_category ON lookups(category);
-    CREATE INDEX idx_lookups_parent ON lookups(parent_id);
-    CREATE UNIQUE INDEX idx_lookups_cat_code ON lookups(category, code);
+      is_active BOOLEAN DEFAULT true, metadata JSONB DEFAULT '{{}}', created_at TIMESTAMPTZ DEFAULT NOW());
+    CREATE INDEX idx_lookups_category ON {T("Lookups")}(category);
+    CREATE INDEX idx_lookups_parent ON {T("Lookups")}(parent_id);
+    CREATE UNIQUE INDEX idx_lookups_cat_code ON {T("Lookups")}(category, code);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'clients') THEN
-    CREATE TABLE clients (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Clients') THEN
+    CREATE TABLE {T("Clients")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       parent_client_id UUID, company_name VARCHAR(200), client_name VARCHAR(200) NOT NULL,
       client_code VARCHAR(50) NOT NULL, address TEXT, pin_code VARCHAR(20),
@@ -154,26 +158,26 @@ DO $$ BEGIN
       gst_no VARCHAR(30), cin_no VARCHAR(30), consignee_category_id UUID,
       is_contract_signed BOOLEAN DEFAULT false, is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_clients_tenant ON clients(tenant_id);
-    CREATE UNIQUE INDEX idx_clients_tenant_code ON clients(tenant_id, client_code);
+    CREATE INDEX idx_clients_tenant ON {T("Clients")}(tenant_id);
+    CREATE UNIQUE INDEX idx_clients_tenant_code ON {T("Clients")}(tenant_id, client_code);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_masters') THEN
-    CREATE TABLE form_masters (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormMasters') THEN
+    CREATE TABLE {T("FormMasters")} (
       id UUID PRIMARY KEY, form_name VARCHAR(100) NOT NULL,
       controller_name VARCHAR(100) NOT NULL, action_name VARCHAR(100) NOT NULL,
       class_name VARCHAR(100), parent_form_id UUID, area_name VARCHAR(50),
       platform VARCHAR(20) DEFAULT 'Web', is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE UNIQUE INDEX idx_forms_name ON form_masters(form_name);
+    CREATE UNIQUE INDEX idx_forms_name ON {T("FormMasters")}(form_name);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'routes') THEN
-    CREATE TABLE routes (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Routes') THEN
+    CREATE TABLE {T("Routes")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       route_name VARCHAR(100) NOT NULL, start_location VARCHAR(200) NOT NULL,
       end_location VARCHAR(200) NOT NULL, start_latitude DECIMAL(10,7), start_longitude DECIMAL(10,7),
@@ -181,60 +185,60 @@ DO $$ BEGIN
       waypoints JSONB DEFAULT '[]', route_type_id UUID, distance_km DECIMAL(10,2),
       estimated_duration_min INT, is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_routes_tenant ON routes(tenant_id);
+    CREATE INDEX idx_routes_tenant ON {T("Routes")}(tenant_id);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'geofences') THEN
-    CREATE TABLE geofences (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Geofences') THEN
+    CREATE TABLE {T("Geofences")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       name VARCHAR(100) NOT NULL, location_type_id UUID, address VARCHAR(200),
       latitude DECIMAL(10,7) NOT NULL, longitude DECIMAL(10,7) NOT NULL,
       radius_meters DECIMAL(10,2) NOT NULL, color VARCHAR(20) DEFAULT 'Blue',
       is_active BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_geofences_tenant ON geofences(tenant_id);
+    CREATE INDEX idx_geofences_tenant ON {T("Geofences")}(tenant_id);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'subscriptions') THEN
-    CREATE TABLE subscriptions (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Subscriptions') THEN
+    CREATE TABLE {T("Subscriptions")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       package_name VARCHAR(100) NOT NULL, subscription_from DATE NOT NULL,
       subscription_to DATE NOT NULL, invoice_no VARCHAR(50) NOT NULL,
       invoice_date DATE NOT NULL, payment_mode_id UUID, remark TEXT,
       is_active BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_subscriptions_tenant ON subscriptions(tenant_id);
+    CREATE INDEX idx_subscriptions_tenant ON {T("Subscriptions")}(tenant_id);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_role_mappings') THEN
-    CREATE TABLE form_role_mappings (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormRoleMappings') THEN
+    CREATE TABLE {T("FormRoleMappings")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       role_id UUID NOT NULL, form_id UUID NOT NULL,
       can_view BOOLEAN DEFAULT false, can_add BOOLEAN DEFAULT false,
       can_edit BOOLEAN DEFAULT false, can_delete BOOLEAN DEFAULT false,
       created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE UNIQUE INDEX idx_frm_tenant_role_form ON form_role_mappings(tenant_id, role_id, form_id);
+    CREATE UNIQUE INDEX idx_frm_tenant_role_form ON {T("FormRoleMappings")}(tenant_id, role_id, form_id);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_company_mappings') THEN
-    CREATE TABLE form_company_mappings (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormCompanyMappings') THEN
+    CREATE TABLE {T("FormCompanyMappings")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       form_id UUID NOT NULL, is_enabled BOOLEAN DEFAULT true,
       created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE UNIQUE INDEX idx_fcm_tenant_form ON form_company_mappings(tenant_id, form_id);
+    CREATE UNIQUE INDEX idx_fcm_tenant_form ON {T("FormCompanyMappings")}(tenant_id, form_id);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'form_column_configs') THEN
-    CREATE TABLE form_column_configs (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormColumnConfigs') THEN
+    CREATE TABLE {T("FormColumnConfigs")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       form_id UUID NOT NULL, column_name VARCHAR(100) NOT NULL,
       display_name VARCHAR(100) NOT NULL, is_active BOOLEAN DEFAULT true,
@@ -243,37 +247,37 @@ DO $$ BEGIN
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'notifications') THEN
-    CREATE TABLE notifications (
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Notifications') THEN
+    CREATE TABLE {T("Notifications")} (
       id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
       user_id UUID NOT NULL REFERENCES users(id), title VARCHAR(200) NOT NULL,
       message TEXT NOT NULL, type VARCHAR(50) NOT NULL, is_read BOOLEAN DEFAULT false,
       link VARCHAR(500), created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_notifications_user_read ON notifications(user_id, is_read);
+    CREATE INDEX idx_notifications_user_read ON {T("Notifications")}(user_id, is_read);
   END IF;
 END $$;
 ";
         await cmd.ExecuteNonQueryAsync();
         
         // Widen existing columns that EF Core created too narrow
-        cmd.CommandText = @"
-ALTER TABLE tenants ALTER COLUMN country_code TYPE VARCHAR(10);
-ALTER TABLE tenants ALTER COLUMN timezone TYPE VARCHAR(50);
-ALTER TABLE tenants ALTER COLUMN currency TYPE VARCHAR(10);
-ALTER TABLE tenants ALTER COLUMN plan TYPE VARCHAR(20);
-ALTER TABLE tenants ALTER COLUMN status TYPE VARCHAR(20);
-ALTER TABLE tenants ALTER COLUMN data_residency_region TYPE VARCHAR(50);
-ALTER TABLE vehicles ALTER COLUMN type TYPE VARCHAR(50);
-ALTER TABLE vehicles ALTER COLUMN model TYPE VARCHAR(100);
-ALTER TABLE vehicles ALTER COLUMN fuel_type TYPE VARCHAR(30);
-ALTER TABLE vehicles ALTER COLUMN status TYPE VARCHAR(30);
-ALTER TABLE drivers ALTER COLUMN status TYPE VARCHAR(30);
-ALTER TABLE devices ALTER COLUMN model TYPE VARCHAR(100);
-ALTER TABLE devices ALTER COLUMN status TYPE VARCHAR(30);
-ALTER TABLE device_vendors ALTER COLUMN protocol TYPE VARCHAR(20);
-ALTER TABLE device_commands ALTER COLUMN command_type TYPE VARCHAR(50);
-ALTER TABLE device_commands ALTER COLUMN status TYPE VARCHAR(30);
-ALTER TABLE users ALTER COLUMN email TYPE VARCHAR(200);
+        cmd.CommandText = $@"
+ALTER TABLE {T("Tenants")} ALTER COLUMN {T("CountryCode")} TYPE VARCHAR(10);
+ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Timezone")} TYPE VARCHAR(50);
+ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Currency")} TYPE VARCHAR(10);
+ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Plan")} TYPE VARCHAR(20);
+ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Status")} TYPE VARCHAR(20);
+ALTER TABLE {T("Tenants")} ALTER COLUMN {T("DataResidencyRegion")} TYPE VARCHAR(50);
+ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("Type")} TYPE VARCHAR(50);
+ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("Model")} TYPE VARCHAR(100);
+ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("FuelType")} TYPE VARCHAR(30);
+ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
+ALTER TABLE {T("Drivers")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
+ALTER TABLE {T("Devices")} ALTER COLUMN {T("Model")} TYPE VARCHAR(100);
+ALTER TABLE {T("Devices")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
+ALTER TABLE {T("DeviceVendors")} ALTER COLUMN {T("Protocol")} TYPE VARCHAR(20);
+ALTER TABLE {T("DeviceCommands")} ALTER COLUMN {T("CommandType")} TYPE VARCHAR(50);
+ALTER TABLE {T("DeviceCommands")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
+ALTER TABLE {T("Users")} ALTER COLUMN {T("Email")} TYPE VARCHAR(200);
 ";
         try { await cmd.ExecuteNonQueryAsync(); Console.WriteLine("✅ Columns widened"); } catch { /* columns already wide enough */ }
         await conn.CloseAsync();
