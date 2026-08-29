@@ -18,7 +18,7 @@ public class JwtTokenService : IJwtTokenService
         _configuration = configuration;
     }
 
-    public string GenerateAccessToken(User user, Tenant tenant, List<string> permissions)
+    public string GenerateAccessToken(User user, Tenant tenant, List<string> permissions, string? roleName = null)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
             _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key not configured")));
@@ -31,6 +31,9 @@ public class JwtTokenService : IJwtTokenService
             new("tenant_name", tenant.Name),
             new("tenant_plan", tenant.Plan),
         };
+
+        if (!string.IsNullOrEmpty(roleName))
+            claims.Add(new Claim(ClaimTypes.Role, roleName));
 
         claims.AddRange(permissions.Select(p => new Claim("permission", p)));
 

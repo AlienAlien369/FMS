@@ -94,7 +94,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginResponse>
         }
 
         // Generate tokens
-        var accessToken = _jwtTokenService.GenerateAccessToken(user, tenant, permissions);
+        var accessToken = _jwtTokenService.GenerateAccessToken(user, tenant, permissions, roleName);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
         return new LoginResponse(
