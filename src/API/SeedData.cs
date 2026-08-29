@@ -15,9 +15,13 @@ public static class SeedData
         // Ensure database is created
         await context.Database.EnsureCreatedAsync();
 
-        // Check if data already exists
+        // Check if core data already exists
         if (await context.Tenants.AnyAsync())
+        {
+            // Core data exists — seed new productization tables if empty
+            await SeedNewTables(context);
             return;
+        }
 
         Console.WriteLine("[Seed] Seeding comprehensive data for UAT...");
 
@@ -402,5 +406,157 @@ public static class SeedData
         Console.WriteLine("[Seed] Login: admin@acme-logistics.com / Admin@123");
         Console.WriteLine("[Seed] Login: admin@saferide-taxi.com / Admin@123");
         Console.WriteLine("[Seed] Login: admin@gulf-mining.com / Admin@123");
+    }
+
+    private static async Task SeedNewTables(FmsDbContext context)
+    {
+        // Seed Lookups if empty
+        if (!await context.Lookups.AnyAsync())
+        {
+            Console.WriteLine("[Seed] Seeding Lookups...");
+            var lookups = new List<Lookup>();
+            int sort = 0;
+            // Country
+            foreach (var (code, label) in new[] { ("IN", "India"), ("US", "United States"), ("SA", "Saudi Arabia"), ("AE", "UAE"), ("GB", "United Kingdom"), ("DE", "Germany"), ("JP", "Japan"), ("AU", "Australia"), ("CA", "Canada"), ("BR", "Brazil") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "Country", Code = code, Label = label, SortOrder = sort++ });
+            // VehicleType
+            sort = 0;
+            foreach (var (code, label) in new[] { ("TRUCK", "Truck"), ("VAN", "Van"), ("TAXI", "Taxi"), ("BUS", "Bus"), ("BIKE", "Bike"), ("TRAILER", "Trailer"), ("CONTAINER", "Container"), ("TANKER", "Tanker"), ("REFRIGERATED", "Refrigerated"), ("FLATBED", "Flatbed"), ("MINI", "Mini Truck") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "VehicleType", Code = code, Label = label, SortOrder = sort++ });
+            // FuelType
+            sort = 0;
+            foreach (var (code, label) in new[] { ("DIESEL", "Diesel"), ("PETROL", "Petrol"), ("CNG", "CNG"), ("LNG", "LNG"), ("ELECTRIC", "Electric"), ("HYBRID", "Hybrid"), ("HSD", "HSD") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "FuelType", Code = code, Label = label, SortOrder = sort++ });
+            // RouteType
+            sort = 0;
+            foreach (var (code, label) in new[] { ("SHUTTLE", "Shuttle"), ("LONG_DISTANCE", "Long Distance"), ("LOCAL", "Local"), ("EXPRESS", "Express"), ("RETURN", "Return") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "RouteType", Code = code, Label = label, SortOrder = sort++ });
+            // LocationType
+            sort = 0;
+            foreach (var (code, label) in new[] { ("WAREHOUSE", "Warehouse"), ("OFFICE", "Office"), ("YARD", "Yard"), ("DOCK", "Dock"), ("PARKING", "Parking"), ("FUEL_STATION", "Fuel Station"), ("CUSTOMER", "Customer"), ("SUPPLIER", "Supplier") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "LocationType", Code = code, Label = label, SortOrder = sort++ });
+            // GeofenceColor
+            sort = 0;
+            foreach (var (code, label) in new[] { ("BLUE", "Blue"), ("RED", "Red"), ("GREEN", "Green"), ("YELLOW", "Yellow"), ("ORANGE", "Orange"), ("PURPLE", "Purple"), ("CYAN", "Cyan") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "GeofenceColor", Code = code, Label = label, SortOrder = sort++ });
+            // SubscriptionPackage
+            sort = 0;
+            foreach (var (code, label) in new[] { ("BASIC", "Basic"), ("PROFESSIONAL", "Professional"), ("ENTERPRISE", "Enterprise"), ("CUSTOM", "Custom") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "SubscriptionPackage", Code = code, Label = label, SortOrder = sort++ });
+            // PaymentMode
+            sort = 0;
+            foreach (var (code, label) in new[] { ("BANK_TRANSFER", "Bank Transfer"), ("CREDIT_CARD", "Credit Card"), ("DEBIT_CARD", "Debit Card"), ("CASH", "Cash"), ("CHEQUE", "Cheque"), ("UPI", "UPI") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "PaymentMode", Code = code, Label = label, SortOrder = sort++ });
+            // IncidentSeverity
+            sort = 0;
+            foreach (var (code, label) in new[] { ("LOW", "Low"), ("MEDIUM", "Medium"), ("HIGH", "High"), ("CRITICAL", "Critical") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "IncidentSeverity", Code = code, Label = label, SortOrder = sort++ });
+            // DeliveryStatus
+            sort = 0;
+            foreach (var (code, label) in new[] { ("PENDING", "Pending"), ("PICKED_UP", "Picked Up"), ("IN_TRANSIT", "In Transit"), ("OUT_FOR_DELIVERY", "Out for Delivery"), ("DELIVERED", "Delivered"), ("FAILED", "Failed") })
+                lookups.Add(new() { Id = Guid.NewGuid(), Category = "DeliveryStatus", Code = code, Label = label, SortOrder = sort++ });
+            context.Lookups.AddRange(lookups);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"[Seed]   Lookups: {lookups.Count} values");
+        }
+
+        // Seed FormMasters if empty
+        if (!await context.FormMasters.AnyAsync())
+        {
+            Console.WriteLine("[Seed] Seeding FormMasters...");
+            var forms = new List<FormMaster>();
+            var formDefs = new[] {
+                ("Operations Overview", "OperationsController", "Overview", "Web"),
+                ("Live Fleet Map", "FleetController", "LiveMap", "Web"),
+                ("Vehicle Directory", "VehiclesController", "Index", "Web"),
+                ("Driver Hub", "DriversController", "Index", "Web"),
+                ("Fuel Analytics", "AnalyticsController", "Fuel", "Web"),
+                ("Maintenance Studio", "MaintenanceController", "Index", "Web"),
+                ("Route Management", "RoutesController", "Index", "Web"),
+                ("Geofence Management", "GeofencesController", "Index", "Web"),
+                ("Active Deliveries", "DeliveriesController", "Index", "Web"),
+                ("Video Telematics", "TelematicsController", "Index", "Web"),
+                ("Incident Center", "IncidentsController", "Index", "Web"),
+                ("Device Fleet", "DevicesController", "Index", "Web"),
+                ("Insight Builder", "AnalyticsController", "Insights", "Web"),
+                ("Company Configuration", "SettingsController", "Company", "Web"),
+                ("User Management", "UsersController", "Index", "Web"),
+                ("Client Management", "ClientsController", "Index", "Web"),
+                ("Role & Permissions", "RbacController", "Index", "Web"),
+                ("Lookup Management", "LookupsController", "Index", "Web"),
+                ("Form Registry", "FormMastersController", "Index", "Web"),
+                ("Feature Management", "FeaturesController", "Index", "Web"),
+                ("Subscription", "SubscriptionsController", "Index", "Web"),
+                ("Notifications", "NotificationsController", "Index", "Web"),
+                ("Audit Trail", "AuditController", "Index", "Web"),
+            };
+            foreach (var (fn, cn, an, pl) in formDefs)
+                forms.Add(new() { Id = Guid.NewGuid(), FormName = fn, ControllerName = cn, ActionName = an, Platform = pl, IsActive = true });
+            context.FormMasters.AddRange(forms);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"[Seed]   FormMasters: {forms.Count} forms registered");
+        }
+
+        // Seed sample clients if empty
+        var tenantIds = await context.Tenants.Select(t => t.Id).ToListAsync();
+        if (tenantIds.Any() && !await context.Clients.AnyAsync())
+        {
+            Console.WriteLine("[Seed] Seeding Clients...");
+            var tid = tenantIds.First();
+            context.Clients.AddRange(new List<Client>
+            {
+                new() { Id = Guid.NewGuid(), TenantId = tid, ClientName = "Reliance Industries", ClientCode = "REL-001", CompanyName = "Reliance Industries Ltd", Address = "Maker Chambers IV, Nariman Point", ContactPerson = "Amit Patel", ContactNo = "+91-22-22785000", MobileNo = "+91-9820012345", EmailId = "amit@ril.com", IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tid, ClientName = "Tata Steel", ClientCode = "TATA-001", CompanyName = "Tata Steel Ltd", Address = "Bandra Kurla Complex", ContactPerson = "Priya Sharma", ContactNo = "+91-22-66652000", MobileNo = "+91-9820067890", EmailId = "priya@tatasteel.com", IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tid, ClientName = "L&T Infrastructure", ClientCode = "LT-001", CompanyName = "Larsen & Toubro Ltd", Address = "Nations Height, Bandra East", ContactPerson = "Rahul Mehta", ContactNo = "+91-22-67525000", MobileNo = "+91-9820011122", EmailId = "rahul@lt.com", IsActive = true },
+            });
+            await context.SaveChangesAsync();
+            Console.WriteLine("[Seed]   Clients: 3 sample clients");
+        }
+
+        // Seed sample routes if empty
+        if (tenantIds.Any() && !await context.Routes.AnyAsync())
+        {
+            Console.WriteLine("[Seed] Seeding Routes...");
+            var tid = tenantIds.First();
+            context.Routes.AddRange(new List<Route>
+            {
+                new() { Id = Guid.NewGuid(), TenantId = tid, RouteName = "Mumbai-Pune Express", StartLocation = "Mumbai", EndLocation = "Pune", StartLatitude = 19.076m, StartLongitude = 72.8777m, EndLatitude = 18.5204m, EndLongitude = 73.8567m, DistanceKm = 149, EstimatedDurationMin = 180, IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tid, RouteName = "Mumbai-Delhi Highway", StartLocation = "Mumbai", EndLocation = "Delhi", StartLatitude = 19.076m, StartLongitude = 72.8777m, EndLatitude = 28.6139m, EndLongitude = 77.209m, DistanceKm = 1400, EstimatedDurationMin = 1800, IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tid, RouteName = "Pune-Bangalore Route", StartLocation = "Pune", EndLocation = "Bangalore", StartLatitude = 18.5204m, StartLongitude = 73.8567m, EndLatitude = 12.9716m, EndLongitude = 77.5946m, DistanceKm = 840, EstimatedDurationMin = 960, IsActive = true },
+            });
+            await context.SaveChangesAsync();
+            Console.WriteLine("[Seed]   Routes: 3 sample routes");
+        }
+
+        // Seed sample geofences if empty
+        if (tenantIds.Any() && !await context.Geofences.AnyAsync())
+        {
+            Console.WriteLine("[Seed] Seeding Geofences...");
+            var tid = tenantIds.First();
+            context.Geofences.AddRange(new List<Geofence>
+            {
+                new() { Id = Guid.NewGuid(), TenantId = tid, Name = "Mumbai Warehouse", Address = "JNPT Area", Latitude = 18.9494m, Longitude = 72.9388m, RadiusMeters = 500, Color = "Blue", IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tid, Name = "Pune Depot", Address = "Chakan Industrial Area", Latitude = 18.7606m, Longitude = 73.8593m, RadiusMeters = 300, Color = "Green", IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tid, Name = "Delhi Hub", Address = "Bawana Industrial Area", Latitude = 28.7966m, Longitude = 77.0567m, RadiusMeters = 400, Color = "Red", IsActive = true },
+            });
+            await context.SaveChangesAsync();
+            Console.WriteLine("[Seed]   Geofences: 3 sample geofences");
+        }
+
+        // Seed sample subscriptions if empty
+        if (tenantIds.Any() && !await context.Subscriptions.AnyAsync())
+        {
+            Console.WriteLine("[Seed] Seeding Subscriptions...");
+            context.Subscriptions.AddRange(new List<Subscription>
+            {
+                new() { Id = Guid.NewGuid(), TenantId = tenantIds[0], PackageName = "Professional", SubscriptionFrom = new DateOnly(2025, 1, 1), SubscriptionTo = new DateOnly(2026, 12, 31), InvoiceNo = "INV-2025-001", InvoiceDate = new DateOnly(2025, 1, 15), IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tenantIds.Count > 1 ? tenantIds[1] : tenantIds[0], PackageName = "Basic", SubscriptionFrom = new DateOnly(2025, 3, 1), SubscriptionTo = new DateOnly(2026, 2, 28), InvoiceNo = "INV-2025-042", InvoiceDate = new DateOnly(2025, 3, 10), IsActive = true },
+                new() { Id = Guid.NewGuid(), TenantId = tenantIds.Count > 2 ? tenantIds[2] : tenantIds[0], PackageName = "Enterprise", SubscriptionFrom = new DateOnly(2024, 6, 1), SubscriptionTo = new DateOnly(2027, 5, 31), InvoiceNo = "INV-2024-089", InvoiceDate = new DateOnly(2024, 6, 15), IsActive = true },
+            });
+            await context.SaveChangesAsync();
+            Console.WriteLine("[Seed]   Subscriptions: 3 subscriptions");
+        }
+
+        Console.WriteLine("[Seed] ✅ New tables seeded");
     }
 }
