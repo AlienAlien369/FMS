@@ -34,7 +34,7 @@ RUN dotnet restore FMS.Production.sln
 # Copy all source code
 COPY src/ src/
 
-# Build and publish the API project (which references everything)
+# Build and publish the API project
 WORKDIR /src/src/API
 RUN dotnet publish FMS.API.csproj -c Release -o /app/publish /p:UseAppHost=false
 
@@ -45,7 +45,7 @@ WORKDIR /app
 # Copy published output
 COPY --from=build /app/publish ./
 
-# Environment
+# Render uses PORT env var; default to 5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:5000
 
