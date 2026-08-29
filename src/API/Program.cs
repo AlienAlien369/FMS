@@ -129,7 +129,7 @@ try
         string Q(string name) => name.Replace("\"", "\"\"");
         string T(string t) => $"\"{Q(t)}\"";
         
-        var sql = $@"
+        cmd.CommandText = $@"
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Lookups') THEN
     CREATE TABLE {T("Lookups")} (
@@ -257,7 +257,8 @@ DO $$ BEGIN
   END IF;
 END $$;
 ";
-        await cmd.ExecuteNonQueryAsync();
+        Console.WriteLine("[DB] Creating new tables...");
+        try { await cmd.ExecuteNonQueryAsync(); Console.WriteLine("✅ New tables created"); } catch (Exception ex) { Console.WriteLine($"⚠️ Table creation: {ex.Message}"); }
         
         // Widen existing columns that EF Core created too narrow
         cmd.CommandText = $@"
