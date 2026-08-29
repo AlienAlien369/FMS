@@ -74,11 +74,13 @@ catch (Exception ex)
     Console.WriteLine("   App will continue without database — health check will report unhealthy");
 }
 
-if (app.Environment.IsDevelopment())
+// Enable Swagger in all environments for API documentation
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "FMS API v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseCors("FmsCors");
 app.UseAuthentication();
