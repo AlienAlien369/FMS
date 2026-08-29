@@ -85,11 +85,13 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:4200",
                 "http://localhost:4201",
-                "https://fms-web-uat.vercel.app",
-                "https://fms-admin-uat.vercel.app",
+                "https://fms-sage-kappa.vercel.app",
+                "https://fms-web-landing.vercel.app",
+                "https://fms-web-landing-lakshyas-projects-c97e54f6.vercel.app",
                 "https://fms-web-lakshyas-projects-c97e54f6.vercel.app",
                 "https://fms-4wpzsv4ub-lakshyas-projects-c97e54f6.vercel.app",
-                "https://fms-web-landing.vercel.app")
+                "https://fms-web-uat.vercel.app",
+                "https://fms-admin-uat.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
