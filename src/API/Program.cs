@@ -88,7 +88,8 @@ builder.Services.AddCors(options =>
                 "https://fms-web-uat.vercel.app",
                 "https://fms-admin-uat.vercel.app",
                 "https://fms-web-lakshyas-projects-c97e54f6.vercel.app",
-                "https://fms-4wpzsv4ub-lakshyas-projects-c97e54f6.vercel.app")
+                "https://fms-4wpzsv4ub-lakshyas-projects-c97e54f6.vercel.app",
+                "https://fms-web-landing.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
