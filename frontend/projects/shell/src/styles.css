@@ -1,0 +1,48 @@
+/* FMS Global Styles */
+:root {
+  --fms-primary: #1e40af;
+  --fms-primary-hover: #1e3a8a;
+  --fms-secondary: #3b82f6;
+  --fms-success: #059669;
+  --fms-warning: #f59e0b;
+  --fms-danger: #dc2626;
+  --fms-bg: #f3f4f6;
+  --fms-text: #111827;
+  --fms-text-secondary: #6b7280;
+  --fms-border: #e5e7eb;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fms-bg);
+  color: var(--fms-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--fms-primary);
+  outline-offset: 2px;
+}

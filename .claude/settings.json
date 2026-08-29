@@ -1,0 +1,36 @@
+{
+  "model": "claude-opus-4-7",
+  "autoUpdate": true,
+  "telemetry": false,
+  "theme": "dark",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "deny": [
+      "rm -rf",
+      "git push origin main",
+      "git push origin master",
+      "docker system prune",
+      "docker volume prune",
+      "kubectl delete",
+      "terraform destroy",
+      "drop database",
+      "drop schema",
+      "DELETE FROM",
+      "TRUNCATE TABLE"
+    ]
+  },
+  "hooks": [
+    {
+      "trigger": "PostToolUse",
+      "commandMatch": "Edit|Write|MultiEdit",
+      "command": ".claude/hooks/post-edit.sh"
+    }
+  ]
+}

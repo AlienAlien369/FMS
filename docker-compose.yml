@@ -1,0 +1,333 @@
+version: '3.8'
+
+services:
+  # ══════════════════════════════════════
+  # INFRASTRUCTURE
+  # ══════════════════════════════════════
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: fms-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: fms
+      POSTGRES_USER: fms
+      POSTGRES_PASSWORD: fms_dev_2026
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fms-network
+
+  mongodb:
+    image: mongo:7
+    container_name: fms-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: fms
+      MONGO_INITDB_ROOT_PASSWORD: fms_dev_2026
+      MONGO_INITDB_DATABASE: fms_telemetry
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fms-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: fms-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fms-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: fms-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: fms
+      RABBITMQ_DEFAULT_PASS: fms_dev_2026
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - fms-network
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: fms-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - fms-network
+
+  # ══════════════════════════════════════
+  # MICROSERVICES
+  # ══════════════════════════════════════
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/ApiGateway/Dockerfile
+    container_name: fms-api-gateway
+    restart: unless-stopped
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fms;Username=fms;Password=fms_dev_2026"
+      MongoDb__ConnectionString: "mongodb://fms:fms_dev_2026@mongodb:27017"
+      MongoDb__DatabaseName: fms_telemetry
+      Redis__ConnectionString: "redis:6379"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__User: fms
+      RabbitMQ__Password: fms_dev_2026
+      Jwt__Key: "fms-dev-secret-key-change-in-production-2026-minimum-32-chars"
+      Jwt__Issuer: "fms-uat"
+      Jwt__Audience: "fms-clients"
+      Jwt__ExpirationMinutes: "15"
+      Mqtt__Host: mosquitto
+      Mqtt__Port: "1883"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fms-network
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: src/Services/Auth/Dockerfile
+    container_name: fms-auth-service
+    restart: unless-stopped
+    ports:
+      - "5100:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fms;Username=fms;Password=fms_dev_2026"
+      Redis__ConnectionString: "redis:6379"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: fms
+      RabbitMQ__Password: fms_dev_2026
+      Jwt__Key: "fms-dev-secret-key-change-in-production-2026-minimum-32-chars"
+      Jwt__Issuer: "fms-uat"
+      Jwt__Audience: "fms-clients"
+      Serilog__SeqUrl: "http://localhost:5341"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fms-network
+
+  entity-service:
+    build:
+      context: .
+      dockerfile: src/Services/Entity/Dockerfile
+    container_name: fms-entity-service
+    restart: unless-stopped
+    ports:
+      - "5200:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fms;Username=fms;Password=fms_dev_2026"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: fms
+      RabbitMQ__Password: fms_dev_2026
+      Jwt__Key: "fms-dev-secret-key-change-in-production-2026-minimum-32-chars"
+      Jwt__Issuer: "fms-uat"
+      Jwt__Audience: "fms-clients"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fms-network
+
+  telemetry-service:
+    build:
+      context: .
+      dockerfile: src/Services/Telemetry/Dockerfile
+    container_name: fms-telemetry-service
+    restart: unless-stopped
+    ports:
+      - "5300:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      MongoDb__ConnectionString: "mongodb://fms:fms_dev_2026@mongodb:27017"
+      MongoDb__DatabaseName: fms_telemetry
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: fms
+      RabbitMQ__Password: fms_dev_2026
+      Jwt__Key: "fms-dev-secret-key-change-in-production-2026-minimum-32-chars"
+      Jwt__Issuer: "fms-uat"
+      Jwt__Audience: "fms-clients"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fms-network
+
+  config-service:
+    build:
+      context: .
+      dockerfile: src/Services/Config/Dockerfile
+    container_name: fms-config-service
+    restart: unless-stopped
+    ports:
+      - "5400:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fms;Username=fms;Password=fms_dev_2026"
+      Redis__ConnectionString: "redis:6379"
+      Jwt__Key: "fms-dev-secret-key-change-in-production-2026-minimum-32-chars"
+      Jwt__Issuer: "fms-uat"
+      Jwt__Audience: "fms-clients"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fms-network
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: src/Services/Notification/Dockerfile
+    container_name: fms-notification-service
+    restart: unless-stopped
+    ports:
+      - "5500:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: fms
+      RabbitMQ__Password: fms_dev_2026
+      SendGrid__ApiKey: "${SENDGRID_API_KEY}"
+      SendGrid__FromEmail: noreply@fms-uat.com
+      SendGrid__FromName: FMS Fleet Management
+      Twilio__AccountSid: "${TWILIO_ACCOUNT_SID}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fms-network
+
+  datacollector-service:
+    build:
+      context: .
+      dockerfile: src/Services/DataCollector/Dockerfile
+    container_name: fms-datacollector
+    restart: unless-stopped
+    ports:
+      - "5600:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: fms
+      RabbitMQ__Password: fms_dev_2026
+      Mqtt__Host: mosquitto
+      Mqtt__Port: "1883"
+      Jwt__Key: "fms-dev-secret-key-change-in-production-2026-minimum-32-chars"
+      Jwt__Issuer: "fms-uat"
+      Jwt__Audience: "fms-clients"
+    depends_on:
+      mosquitto:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fms-network
+
+  # ══════════════════════════════════════
+  # MONITORING
+  # ══════════════════════════════════════
+
+  seq:
+    image: datalust/seq:latest
+    container_name: fms-seq
+    restart: unless-stopped
+    ports:
+      - "5341:80"
+      - "8081:8080"
+    environment:
+      ACCEPT_EULA: "Y"
+    volumes:
+      - seq_data:/data
+    networks:
+      - fms-network
+
+  # ══════════════════════════════════════
+  # VOLUMES
+  # ══════════════════════════════════════
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+  mosquitto_data:
+  mosquitto_log:
+  seq_data:
+
+# ══════════════════════════════════════
+# NETWORKS
+# ══════════════════════════════════════
+
+networks:
+  fms-network:
+    driver: bridge
+    name: fms-network

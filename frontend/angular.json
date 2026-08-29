@@ -1,0 +1,93 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "shell": {
+      "projectType": "application",
+      "root": "projects/shell",
+      "sourceRoot": "projects/shell/src",
+      "prefix": "fms",
+      "architect": {
+        "build": {
+          "builder": "@angular-architects/module-federation:browser",
+          "options": {
+            "outputPath": "dist/shell",
+            "index": "projects/shell/src/index.html",
+            "main": "projects/shell/src/main.ts",
+            "polyfills": ["zone.js"],
+            "tsConfig": "projects/shell/tsconfig.app.json",
+            "assets": [
+              "projects/shell/src/favicon.ico",
+              "projects/shell/src/assets"
+            ],
+            "styles": [
+              "projects/shell/src/styles.css"
+            ],
+            "scripts": [],
+            "extraWebpackConfig": "projects/shell/webpack.config.js"
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                { "type": "initial", "maximumWarning": "2mb", "maximumError": "5mb" }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-architects/module-federation:dev-server",
+          "configurations": {
+            "production": { "buildTarget": "shell:build:production" },
+            "development": { "buildTarget": "shell:build:development" }
+          },
+          "defaultConfiguration": "development"
+        }
+      }
+    },
+    "logistics": {
+      "projectType": "application",
+      "root": "projects/logistics",
+      "sourceRoot": "projects/logistics/src",
+      "prefix": "fms-logistics",
+      "architect": {
+        "build": {
+          "builder": "@angular-architects/module-federation:browser",
+          "options": {
+            "outputPath": "dist/logistics",
+            "index": "projects/logistics/src/index.html",
+            "main": "projects/logistics/src/main.ts",
+            "polyfills": ["zone.js"],
+            "tsConfig": "projects/logistics/tsconfig.app.json",
+            "assets": ["projects/logistics/src/assets"],
+            "styles": ["projects/logistics/src/styles.css"],
+            "extraWebpackConfig": "projects/logistics/webpack.config.js"
+          },
+          "configurations": {
+            "production": { "outputHashing": "all" },
+            "development": { "sourceMap": true }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-architects/module-federation:dev-server",
+          "configurations": {
+            "production": { "buildTarget": "logistics:build:production" },
+            "development": { "buildTarget": "logistics:build:development" }
+          },
+          "defaultConfiguration": "development"
+        }
+      }
+    }
+  }
+}

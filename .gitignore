@@ -1,0 +1,66 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# .NET
+*.user
+*.suo
+*.userosscache
+*.sln.docstats
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Node
+node_modules/
+dist/
+.angular/
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+appsettings.Production.json
+*.pem
+*.key
+*.cert
+
+# Docker
+docker-compose.override.yml
+
+# Coverage
+coverage/
+*.coveragexml
+
+# Packages
+*.nupkg
+packages/
+
+# Mongo
+mongo-data/
+redis-data/
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/

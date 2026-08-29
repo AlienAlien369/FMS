@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FMS — RGBSI Fleet Management SaaS</title>
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1557b0;
+      --accent: #00c853;
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #242733;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --border: #3c4043;
+      --danger: #ea4335;
+      --warning: #fbbc04;
+      --gradient: linear-gradient(135deg, #1a73e8, #00c853);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 40px; background: var(--surface);
+      border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 700; }
+    .logo-icon {
+      width: 36px; height: 36px; background: var(--gradient); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-actions { display: flex; gap: 12px; align-items: center; }
+    .btn {
+      padding: 8px 20px; border-radius: 6px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: all .2s;
+    }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface2); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-accent { background: var(--accent); color: #000; }
+    .btn-accent:hover { background: #00b248; }
+    .btn-lg { padding: 12px 32px; font-size: 16px; border-radius: 8px; }
+
+    /* HERO */
+    .hero {
+      text-align: center; padding: 80px 40px 60px;
+      background: radial-gradient(ellipse at top, rgba(26,115,232,0.15) 0%, transparent 60%);
+    }
+    .hero h1 { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    .hero h1 span { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 20px; color: var(--muted); max-width: 680px; margin: 0 auto 32px; }
+    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      background: rgba(0,200,83,0.15); color: var(--accent); margin-bottom: 20px;
+    }
+
+    /* STATS */
+    .stats {
+      display: flex; justify-content: center; gap: 48px; padding: 40px;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .stat { text-align: center; }
+    .stat-val { font-size: 36px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* SECTORS */
+    .section { padding: 60px 40px; max-width: 1200px; margin: 0 auto; }
+    .section-title { font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+    .section-sub { text-align: center; color: var(--muted); margin-bottom: 40px; font-size: 16px; }
+    .sectors-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .sector-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; transition: all .25s; cursor: pointer;
+    }
+    .sector-card:hover { border-color: var(--primary); transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(26,115,232,0.15); }
+    .sector-icon { font-size: 32px; margin-bottom: 12px; }
+    .sector-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .sector-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .sector-phase { font-size: 11px; color: var(--accent); margin-top: 10px; font-weight: 600; }
+
+    /* FEATURES */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 28px; transition: all .25s;
+    }
+    .feature-card:hover { border-color: var(--primary); }
+    .feature-icon { font-size: 28px; margin-bottom: 12px; }
+    .feature-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* UAT ENVIRONMENTS */
+    .env-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 32px; }
+    .env-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .env-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .env-url { font-size: 14px; font-family: 'Cascadia Code', 'Fira Code', monospace; color: var(--primary);
+      word-break: break-all; }
+    .env-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; width: fit-content;
+      background: rgba(26,115,232,0.15); color: var(--primary); font-weight: 600; }
+
+    /* CREDENTIALS TABLE */
+    .cred-table {
+      width: 100%; border-collapse: collapse; margin-top: 24px;
+      background: var(--surface); border-radius: 12px; overflow: hidden;
+    }
+    .cred-table th { background: var(--surface2); padding: 12px 16px; text-align: left;
+      font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .cred-table td { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 14px; }
+    .cred-table code { background: var(--surface2); padding: 2px 8px; border-radius: 4px; font-size: 13px; }
+
+    /* ARCHITECTURE */
+    .arch-block {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px;
+    }
+    .arch-icon { font-size: 28px; flex-shrink: 0; }
+    .arch-title { font-size: 16px; font-weight: 700; }
+    .arch-tech { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* FOOTER */
+    footer {
+      text-align: center; padding: 40px; border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 13px;
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate { animation: fadeUp 0.6s ease-out forwards; }
+    .delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .delay-3 { animation-delay: 0.3s; opacity: 0; }
+
+    /* PULSE DOT */
+    .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">
+      <div class="logo-icon">🚀</div>
+      <span>FMS</span>
+    </div>
+    <div class="nav-links">
+      <a href="#sectors">Sectors</a>
+      <a href="#features">Features</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#uat">UAT</a>
+      <a href="#credentials">Demo Login</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('uat').scrollIntoView({behavior:'smooth'})">UAT Environments</button>
+      <button class="btn btn-primary" onclick="document.getElementById('credentials').scrollIntoView({behavior:'smooth'})">Start Free Trial</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="badge animate"><span class="pulse"></span>Multi-Tenant SaaS Platform</div>
+    <h1 class="animate delay-1">RGBSI <span>Fleet Management</span><br>System</h1>
+    <p class="animate delay-2">White-label, multi-country fleet intelligence serving 8 business sectors. Dynamic modules, real-time telemetry, and configurable everything.</p>
+    <div class="hero-actions animate delay-3">
+      <button class="btn btn-accent btn-lg" onclick="document.getElementById('credentials').scrollIntoView({behavior:'smooth'})">🚀 Start Free Trial</button>
+      <button class="btn btn-ghost btn-lg" onclick="document.getElementById('sectors').scrollIntoView({behavior:'smooth'})">Explore Sectors →</button>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="stat-val">8</div><div class="stat-label">Business Sectors</div></div>
+    <div class="stat"><div class="stat-val">200+</div><div class="stat-label">Legacy Pages Consolidated</div></div>
+    <div class="stat"><div class="stat-val">3</div><div class="stat-label">UAT Environments</div></div>
+    <div class="stat"><div class="stat-val">110+</div><div class="stat-label">Production Files</div></div>
+  </div>
+
+  <!-- 8 SECTORS -->
+  <section class="section" id="sectors">
+    <h2 class="section-title">8 Business Sectors</h2>
+    <p class="section-sub">Each sector is a deployable Module Federation plugin. Tenants subscribe to only what they need.</p>
+    <div class="sectors-grid">
+      <div class="sector-card">
+        <div class="sector-icon">🚛</div>
+        <div class="sector-name">Logistics</div>
+        <div class="sector-desc">Real-time tracking, geofencing, dispatch, fuel monitoring, maintenance, POD, driver scorecards</div>
+        <div class="sector-phase">Phase 1 — 20 weeks</div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon">🚕</div>
+        <div class="sector-name">Taxis</div>
+        <div class="sector-desc">GPS tracking, trip replay, dual camera, panic button, face ID, fare alerts, fake trip detection</div>
+        <div class="sector-phase">Phase 1 — 18 weeks</div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon">🎒</div>
+        <div class="sector-name">School Buses</div>
+        <div class="sector-desc">Student tracking, parent notifications, stop arm capture, route management, unattended alerts</div>
+        <div class="sector-phase">Phase 1 — 16 weeks</div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon">🚑</div>
+        <div class="sector-name">Ambulances</div>
+        <div class="sector-desc">Real-time dispatch, incident video upload, ADAS, panic SOS, control tower coordination</div>
+        <div class="sector-phase">Phase 1 — 14 weeks</div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon">🚌</div>
+        <div class="sector-name">Public Transport</div>
+        <div class="sector-desc">Route management, passenger counting, onboard terminals, blind spot detection, SOS</div>
+        <div class="sector-phase">Phase 2 — 15 weeks</div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon">⛏️</div>
+        <div class="sector-name">Mining</div>
+        <div class="sector-desc">Fleet tracking, TPMS, proximity warning, carbon footprint, heavy equipment telemetry</div>
+        <div class="sector-phase">Phase 2 — 18 weeks</div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon">🚆</div>
+        <div class="sector-name">Railways</div>
+        <div class="sector-desc">Train tracking, loco pilot behavior, obstacle detection, wheel-flat monitoring, wayside health</div>
+        <div class="sector-phase">Phase 2 — 22 weeks</div>
+      </div>
+      <div class="sector-card">
+        <div class="sector-icon">🚔</div>
+        <div class="sector-name">Law Enforcement</div>
+        <div class="sector-desc">ALPR, body-worn cameras, patrol dispatch, evidence upload, facial recognition, drone integration</div>
+        <div class="sector-phase">Phase 2 — 25 weeks</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <h2 class="section-title">Dynamic Everything</h2>
+    <p class="section-sub">Every UI element — navbar, tables, forms, alerts, reports — is configurable per tenant and per user.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🏢</div>
+        <div class="feature-title">Multi-Tenant Architecture</div>
+        <div class="feature-desc">Shared DB with Row-Level Security, schema-per-tenant for enterprise, database-per-tenant for government. Every query scoped by tenant.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌍</div>
+        <div class="feature-title">Multi-Country Compliance</div>
+        <div class="feature-desc">GDPR, data residency routing, multi-currency, multi-language, RTL support. Country-specific tax and compliance rules.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <div class="feature-title">White-Label Branding</div>
+        <div class="feature-desc">Custom domain, logo, colors, CSS variables, email templates. Each tenant gets a fully branded experience.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Dynamic Table Columns</div>
+        <div class="feature-desc">Users configure table columns — order, width, visibility, sort. Preferences saved per user per page.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <div class="feature-title">JSON Schema Forms</div>
+        <div class="feature-desc">Tenant admins add custom fields without code deployment. Forms rendered at runtime from JSON Schema definitions.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <div class="feature-title">Device Adapter Framework</div>
+        <div class="feature-desc">Vendor-agnostic MQTT ingestion. Onboard any GPS vendor via JSON config — zero code changes required.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Real-Time Telemetry</div>
+        <div class="feature-desc">MQTT → RabbitMQ → SignalR. Live device streams, tenant-isolated WebSocket groups, instant alerts.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <div class="feature-title">Dynamic RBAC</div>
+        <div class="feature-desc">Tenant-defined roles with granular permissions. Different users in the same company see different menus and data.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <div class="feature-title">Configurable Alerts</div>
+        <div class="feature-desc">Per-tenant, per-country alert thresholds. Email, SMS, push, WhatsApp notifications. Locale-aware templates.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="section" id="architecture">
+    <h2 class="section-title">Tech Stack</h2>
+    <p class="section-sub">Built on free-tier infrastructure, ready to scale to enterprise.</p>
+    <div class="arch-block"><div class="arch-icon">🅰️</div><div><div class="arch-title">Angular 17+ Shell</div><div class="arch-tech">Module Federation · Dynamic nav · i18n/l10n · Leaflet maps · White-label themer</div></div></div>
+    <div class="arch-block"><div class="arch-icon">⚡</div><div><div class="arch-title">.NET 8 Web API</div><div class="arch-tech">Clean Architecture · CQRS + MediatR · FluentValidation · SignalR</div></div></div>
+    <div class="arch-block"><div class="arch-icon">🐘</div><div><div class="arch-title">PostgreSQL (Neon)</div><div class="arch-tech">Serverless · Row-Level Security · Branching · Schema-per-tenant option</div></div></div>
+    <div class="arch-block"><div class="arch-icon">🍃</div><div><div class="arch-title">MongoDB Atlas</div><div class="arch-tech">Time-series telemetry · Sharded by tenantId + countryCode · Free M0 cluster</div></div></div>
+    <div class="arch-block"><div class="arch-icon">📡</div><div><div class="arch-title">MQTT + RabbitMQ</div><div class="arch-tech">Mosquitto local / EMQX Cloud · CloudAMQP free tier · MassTransit consumers</div></div></div>
+    <div class="arch-block"><div class="arch-icon">🔴</div><div><div class="arch-title">Redis (Upstash)</div><div class="arch-tech">Tenant-scoped caching · Session management · 10K requests/day free</div></div></div>
+    <div class="arch-block"><div class="arch-icon">☁️</div><div><div class="arch-title">Cloudflare + Railway</div><div class="arch-tech">CDN + R2 (zero egress) · CI/CD via GitHub Actions · Grafana monitoring</div></div></div>
+  </section>
+
+  <!-- UAT ENVIRONMENTS -->
+  <section class="section" id="uat">
+    <h2 class="section-title">UAT Environments</h2>
+    <p class="section-sub">Live demo environments committed with sample data and pre-configured URLs.</p>
+    <div class="env-grid">
+      <div class="env-card">
+        <div class="env-label">🌐 Web Application</div>
+        <div class="env-url">https://fms-web-uat.vercel.app</div>
+        <div class="env-tag">Vercel · UAT</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">⚙️ API Backend</div>
+        <div class="env-url">https://fms-api-uat.onrender.com</div>
+        <div class="env-tag">Render · UAT</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">🛡️ Admin Portal</div>
+        <div class="env-url">https://fms-admin-uat.vercel.app</div>
+        <div class="env-tag">Vercel · UAT</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">📡 MQTT Broker</div>
+        <div class="env-url">mqtt://fms-mqtt-uat.onrender.com:1883</div>
+        <div class="env-tag">Mosquitto · UAT</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO CREDENTIALS -->
+  <section class="section" id="credentials">
+    <h2 class="section-title">Demo Credentials</h2>
+    <p class="section-sub">Pre-seeded tenants with sample vehicles, drivers, devices, and feature configurations.</p>
+    <table class="cred-table">
+      <thead>
+        <tr>
+          <th>Tenant</th>
+          <th>Email</th>
+          <th>Password</th>
+          <th>Sectors</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🏢 <strong>Acme Logistics Corp</strong></td>
+          <td><code>admin@acme-logistics.com</code></td>
+          <td><code>Admin@123</code></td>
+          <td>🚛 Logistics</td>
+        </tr>
+        <tr>
+          <td>🚕 <strong>SafeRide Taxi Services</strong></td>
+          <td><code>admin@saferide-taxi.com</code></td>
+          <td><code>Admin@123</code></td>
+          <td>🚕 Taxis</td>
+        </tr>
+        <tr>
+          <td>⛏️ <strong>Gulf Mining Group</strong></td>
+          <td><code>admin@gulf-mining.com</code></td>
+          <td><code>Admin@123</code></td>
+          <td>⛏️ Mining</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top: 40px; margin-bottom: 16px; font-size: 22px;">Device Vendors (Pre-Configured)</h3>
+    <table class="cred-table">
+      <thead>
+        <tr><th>Vendor</th><th>Protocol</th><th>Sample Device IDs</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>🇮🇳 iTriangle</td><td>MQTT + TCP</td><td><code>8679590332xxxx</code>, <code>8679590333xxxx</code></td></tr>
+        <tr><td>🇨🇳 Streamax</td><td>MQTT</td><td><code>8634560123xxxx</code>, <code>8634560124xxxx</code></td></tr>
+        <tr><td>🇱🇹 Teltonika</td><td>TCP + MQTT</td><td><code>3520930812xxxx</code>, <code>3520930813xxxx</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PROJECT STRUCTURE -->
+  <section class="section">
+    <h2 class="section-title">Project Structure</h2>
+    <p class="section-sub">110+ production-ready files across Clean Architecture layers.</p>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 13px; line-height: 1.8; color: var(--muted); overflow-x: auto;">
+      <div><span style="color: var(--accent);">📁 FMS/</span></div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/Domain/</span> — Entities, Interfaces, Value Objects</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/Application/</span> — CQRS Commands/Queries, DTOs, Validators</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/Infrastructure/</span> — EF Core, MongoDB, JWT, Repositories</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--primary);">src/API/</span> — Controllers, Middleware, Program.cs, SeedData</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--warning);">frontend/projects/shell/</span> — Angular Shell + Module Federation Host</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--warning);">frontend/projects/logistics/</span> — Logistics Remote Module</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--danger);">scripts/init-db.sql</span> — PostgreSQL RLS + Indexes</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--danger);">docker-compose.yml</span> — Local Dev Stack (PG, Mongo, Redis, RabbitMQ, MQTT)</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: #ab47bc;">infra/environments/uat/</span> — Terraform for Neon, Render, Vercel</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: #ab47bc;">.github/workflows/ci.yml</span> — CI/CD Pipeline</div>
+      <div>&nbsp;&nbsp;├─ <span style="color: var(--accent);">agent_docs/</span> — 10 Architecture Reference Docs</div>
+      <div>&nbsp;&nbsp;└─ <span style="color: var(--accent);">.claude/</span> — AI Agent Config + Commands</div>
+    </div>
+  </section>
+
+  <footer>
+    <p>RGBSI Fleet Management System — Multi-Tenant SaaS Platform</p>
+    <p style="margin-top: 4px;">Built with ❤️ using .NET 8, Angular 17+, PostgreSQL, MongoDB, MQTT</p>
+  </footer>
+</body>
+</html>
