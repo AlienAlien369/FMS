@@ -13,8 +13,14 @@ var serviceName = "Telemetry Service";
 builder.Services.AddFmsSharedKernel(config, serviceName);
 
 // ── MongoDB ──
-var mongoClient = new MongoClient(config["MongoDb:ConnectionString"] ?? "mongodb://localhost:27017");
-var mongoDb = mongoClient.GetDatabase(config["MongoDb:DatabaseName"] ?? "fms_telemetry");
+// MongoDB connection: check MONGODB_CONNECTION_STRING env var first, then config
+var mongoConnStr = Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")
+    ?? config["MongoDb:ConnectionString"]
+    ?? "mongodb://localhost:27017";
+var mongoDbName = config["MongoDb:DatabaseName"] ?? "fms_telemetry";
+var mongoClient = new MongoClient(mongoConnStr);
+var mongoDb = mongoClient.GetDatabase(mongoDbName);
+Console.WriteLine($"🍃 MongoDB connecting to: {mongoConnStr.Split('@').Last()} (db: {mongoDbName})");
 builder.Services.AddSingleton<IMongoDatabase>(mongoDb);
 builder.Services.AddSingleton<ITelemetryRepository, TelemetryRepository>();
 
