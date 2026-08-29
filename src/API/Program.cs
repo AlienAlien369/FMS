@@ -8,17 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ─────────────────────────────────────────────────────────────
-// 1. Parse DATABASE_URL BEFORE DI registrations (critical!)
-//    AddInfrastructure registers FmsDbContext with the connection
-//    string at registration time, so the value must be set first.
-// ─────────────────────────────────────────────────────────────
-
+// Parse DATABASE_URL BEFORE DI registrations
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 if (!string.IsNullOrEmpty(databaseUrl))
 {
     Console.WriteLine($"[DB] DATABASE_URL found (length={databaseUrl.Length})");
-
     try
     {
         var uri = new Uri(databaseUrl);
@@ -28,32 +22,24 @@ if (!string.IsNullOrEmpty(databaseUrl))
         var host = uri.Host;
         var port = uri.Port > 0 ? uri.Port : 5432;
         var database = uri.AbsolutePath.TrimStart('/');
-
-        // Parse query params
         var queryParams = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(uri.Query))
         {
             foreach (var param in uri.Query.TrimStart('?').Split('&'))
             {
                 var parts = param.Split('=');
-                if (parts.Length == 2)
-                    queryParams[parts[0]] = Uri.UnescapeDataString(parts[1]);
+                if (parts.Length == 2) queryParams[parts[0]] = Uri.UnescapeDataString(parts[1]);
             }
         }
-
-        if (!queryParams.ContainsKey("sslmode"))
-            queryParams["sslmode"] = "require";
-
+        if (!queryParams.ContainsKey("sslmode")) queryParams["sslmode"] = "require";
         var connStr = $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode={queryParams["sslmode"]};Trust Server Certificate=true";
         builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
-        Console.WriteLine($"[DB] Parsed connection: Host={host}, Port={port}, Database={database}, User={user}");
+        Console.WriteLine($"[DB] Parsed: Host={host}, Database={database}, User={user}");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"[DB] URI parse failed: {ex.Message}");
-        // Use raw URL as fallback
-        if (!databaseUrl.Contains("sslmode"))
-            databaseUrl += databaseUrl.Contains("?") ? "&sslmode=require" : "?sslmode=require";
+        if (!databaseUrl.Contains("sslmode")) databaseUrl += databaseUrl.Contains("?") ? "&sslmode=require" : "?sslmode=require";
         builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
     }
 }
@@ -62,7 +48,6 @@ else
     Console.WriteLine("[DB] No DATABASE_URL found, using config defaults");
 }
 
-// JWT Secret from env var
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
 if (!string.IsNullOrEmpty(jwtSecret))
 {
@@ -71,13 +56,9 @@ if (!string.IsNullOrEmpty(jwtSecret))
     builder.Configuration["Jwt:Audience"] = "FMS";
 }
 
-// ─────────────────────────────────────────────────────────────
-// 2. Register services (now reads the parsed connection string)
-// ─────────────────────────────────────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// CORS for Angular
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FmsCors", policy =>
@@ -116,173 +97,107 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<FmsDbContext>();
-        
-        // Try EnsureCreated first (works for new DBs)
         await db.Database.EnsureCreatedAsync();
         Console.WriteLine("✅ Database schema created/verified");
-        
-        // For existing DBs, create missing tables via raw SQL
+
+        // Create missing tables for existing DBs
+        // EF Core uses PascalCase quoted identifiers: "Lookups", "Id", "Category" etc.
+        // Column names must match EF Core's property names exactly.
         var conn = db.Database.GetDbConnection();
         await conn.OpenAsync();
         using var cmd = conn.CreateCommand();
-        // Helper: escape double quotes for C# verbatim strings
-        string Q(string name) => name.Replace("\"", "\"\"");
-        string T(string t) => $"\"{Q(t)}\"";
-        
-        cmd.CommandText = $@"
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Lookups') THEN
-    CREATE TABLE {T("Lookups")} (
-      id UUID PRIMARY KEY, category VARCHAR(50) NOT NULL, parent_id UUID REFERENCES {T("Lookups")}(id),
-      code VARCHAR(20) NOT NULL, label VARCHAR(100) NOT NULL, sort_order INT DEFAULT 0,
-      is_active BOOLEAN DEFAULT true, metadata JSONB DEFAULT '{{}}', created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_lookups_category ON {T("Lookups")}(category);
-    CREATE INDEX idx_lookups_parent ON {T("Lookups")}(parent_id);
-    CREATE UNIQUE INDEX idx_lookups_cat_code ON {T("Lookups")}(category, code);
-  END IF;
-END $$;
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Clients') THEN
-    CREATE TABLE {T("Clients")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      parent_client_id UUID, company_name VARCHAR(200), client_name VARCHAR(200) NOT NULL,
-      client_code VARCHAR(50) NOT NULL, address TEXT, pin_code VARCHAR(20),
-      country_id UUID, state_id UUID, city_id UUID,
-      latitude DECIMAL(10,7), longitude DECIMAL(10,7),
-      billing_address_same BOOLEAN DEFAULT false, billing_address TEXT, billing_pin_code VARCHAR(20),
-      billing_country_id UUID, billing_state_id UUID, billing_city_id UUID,
-      company_phone VARCHAR(20), contact_person VARCHAR(100), contact_no VARCHAR(20),
-      alt_contact_no VARCHAR(20), contact_email VARCHAR(100), mobile_no VARCHAR(20),
-      email_id VARCHAR(100), alt_email_id VARCHAR(100), pan_no VARCHAR(20),
-      gst_no VARCHAR(30), cin_no VARCHAR(30), consignee_category_id UUID,
-      is_contract_signed BOOLEAN DEFAULT false, is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_clients_tenant ON {T("Clients")}(tenant_id);
-    CREATE UNIQUE INDEX idx_clients_tenant_code ON {T("Clients")}(tenant_id, client_code);
-  END IF;
-END $$;
+        // Helper to produce a double-quoted identifier
+        string Q(string name) => $"\"{name}\"";
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormMasters') THEN
-    CREATE TABLE {T("FormMasters")} (
-      id UUID PRIMARY KEY, form_name VARCHAR(100) NOT NULL,
-      controller_name VARCHAR(100) NOT NULL, action_name VARCHAR(100) NOT NULL,
-      class_name VARCHAR(100), parent_form_id UUID, area_name VARCHAR(50),
-      platform VARCHAR(20) DEFAULT 'Web', is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE UNIQUE INDEX idx_forms_name ON {T("FormMasters")}(form_name);
-  END IF;
-END $$;
+        var tableStatements = new[]
+        {
+            $"CREATE TABLE IF NOT EXISTS {Q("Lookups")} ({Q("Id")} UUID PRIMARY KEY, {Q("Category")} VARCHAR(50) NOT NULL, {Q("ParentId")} UUID, {Q("Code")} VARCHAR(20) NOT NULL, {Q("Label")} VARCHAR(100) NOT NULL, {Q("SortOrder")} INTEGER DEFAULT 0, {Q("IsActive")} BOOLEAN DEFAULT true, {Q("Metadata")} JSONB DEFAULT '{{}}', {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("Clients")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("ParentClientId")} UUID, {Q("CompanyName")} VARCHAR(200), {Q("ClientName")} VARCHAR(200) NOT NULL, {Q("ClientCode")} VARCHAR(50) NOT NULL, {Q("Address")} TEXT, {Q("PinCode")} VARCHAR(20), {Q("CountryId")} UUID, {Q("StateId")} UUID, {Q("CityId")} UUID, {Q("Latitude")} DECIMAL(10,7), {Q("Longitude")} DECIMAL(10,7), {Q("BillingAddressSame")} BOOLEAN DEFAULT false, {Q("BillingAddress")} TEXT, {Q("BillingPinCode")} VARCHAR(20), {Q("BillingCountryId")} UUID, {Q("BillingStateId")} UUID, {Q("BillingCityId")} UUID, {Q("CompanyPhone")} VARCHAR(20), {Q("ContactPerson")} VARCHAR(100), {Q("ContactNo")} VARCHAR(20), {Q("AltContactNo")} VARCHAR(20), {Q("ContactEmail")} VARCHAR(100), {Q("MobileNo")} VARCHAR(20), {Q("EmailId")} VARCHAR(100), {Q("AltEmailId")} VARCHAR(100), {Q("PanNo")} VARCHAR(20), {Q("GstNo")} VARCHAR(30), {Q("CinNo")} VARCHAR(30), {Q("ConsigneeCategoryId")} UUID, {Q("IsContractSigned")} BOOLEAN DEFAULT false, {Q("IsActive")} BOOLEAN DEFAULT true, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW(), {Q("UpdatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("FormMasters")} ({Q("Id")} UUID PRIMARY KEY, {Q("FormName")} VARCHAR(100) NOT NULL, {Q("ControllerName")} VARCHAR(100) NOT NULL, {Q("ActionName")} VARCHAR(100) NOT NULL, {Q("ClassName")} VARCHAR(100), {Q("ParentFormId")} UUID, {Q("AreaName")} VARCHAR(50), {Q("Platform")} VARCHAR(20) DEFAULT 'Web', {Q("IsActive")} BOOLEAN DEFAULT true, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("Routes")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("RouteName")} VARCHAR(100) NOT NULL, {Q("StartLocation")} VARCHAR(200) NOT NULL, {Q("EndLocation")} VARCHAR(200) NOT NULL, {Q("StartLatitude")} DECIMAL(10,7), {Q("StartLongitude")} DECIMAL(10,7), {Q("EndLatitude")} DECIMAL(10,7), {Q("EndLongitude")} DECIMAL(10,7), {Q("Waypoints")} JSONB DEFAULT '[]', {Q("RouteTypeId")} UUID, {Q("DistanceKm")} DECIMAL(10,2), {Q("EstimatedDurationMin")} INTEGER, {Q("IsActive")} BOOLEAN DEFAULT true, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW(), {Q("UpdatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("Geofences")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("Name")} VARCHAR(100) NOT NULL, {Q("LocationTypeId")} UUID, {Q("Address")} VARCHAR(200), {Q("Latitude")} DECIMAL(10,7) NOT NULL, {Q("Longitude")} DECIMAL(10,7) NOT NULL, {Q("RadiusMeters")} DECIMAL(10,2) NOT NULL, {Q("Color")} VARCHAR(20) DEFAULT 'Blue', {Q("IsActive")} BOOLEAN DEFAULT true, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW(), {Q("UpdatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("Subscriptions")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("PackageName")} VARCHAR(100) NOT NULL, {Q("SubscriptionFrom")} DATE NOT NULL, {Q("SubscriptionTo")} DATE NOT NULL, {Q("InvoiceNo")} VARCHAR(50) NOT NULL, {Q("InvoiceDate")} DATE NOT NULL, {Q("PaymentModeId")} UUID, {Q("Remark")} TEXT, {Q("IsActive")} BOOLEAN DEFAULT true, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("FormRoleMappings")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("RoleId")} UUID NOT NULL, {Q("FormId")} UUID NOT NULL, {Q("CanView")} BOOLEAN DEFAULT false, {Q("CanAdd")} BOOLEAN DEFAULT false, {Q("CanEdit")} BOOLEAN DEFAULT false, {Q("CanDelete")} BOOLEAN DEFAULT false, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("FormCompanyMappings")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("FormId")} UUID NOT NULL, {Q("IsEnabled")} BOOLEAN DEFAULT true, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("FormColumnConfigs")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("FormId")} UUID NOT NULL, {Q("ColumnName")} VARCHAR(100) NOT NULL, {Q("DisplayName")} VARCHAR(100) NOT NULL, {Q("IsActive")} BOOLEAN DEFAULT true, {Q("SortOrder")} INTEGER DEFAULT 0, {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+            $"CREATE TABLE IF NOT EXISTS {Q("Notifications")} ({Q("Id")} UUID PRIMARY KEY, {Q("TenantId")} UUID NOT NULL, {Q("UserId")} UUID NOT NULL, {Q("Title")} VARCHAR(200) NOT NULL, {Q("Message")} TEXT NOT NULL, {Q("Type")} VARCHAR(50) NOT NULL, {Q("IsRead")} BOOLEAN DEFAULT false, {Q("Link")} VARCHAR(500), {Q("CreatedAt")} TIMESTAMPTZ DEFAULT NOW())",
+        };
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Routes') THEN
-    CREATE TABLE {T("Routes")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      route_name VARCHAR(100) NOT NULL, start_location VARCHAR(200) NOT NULL,
-      end_location VARCHAR(200) NOT NULL, start_latitude DECIMAL(10,7), start_longitude DECIMAL(10,7),
-      end_latitude DECIMAL(10,7), end_longitude DECIMAL(10,7),
-      waypoints JSONB DEFAULT '[]', route_type_id UUID, distance_km DECIMAL(10,2),
-      estimated_duration_min INT, is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_routes_tenant ON {T("Routes")}(tenant_id);
-  END IF;
-END $$;
+        Console.WriteLine("[DB] Creating new tables with PascalCase columns...");
+        foreach (var sql in tableStatements)
+        {
+            try
+            {
+                cmd.CommandText = sql;
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Table error: {ex.Message.Split('\n')[0]}");
+            }
+        }
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Geofences') THEN
-    CREATE TABLE {T("Geofences")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      name VARCHAR(100) NOT NULL, location_type_id UUID, address VARCHAR(200),
-      latitude DECIMAL(10,7) NOT NULL, longitude DECIMAL(10,7) NOT NULL,
-      radius_meters DECIMAL(10,2) NOT NULL, color VARCHAR(20) DEFAULT 'Blue',
-      is_active BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_geofences_tenant ON {T("Geofences")}(tenant_id);
-  END IF;
-END $$;
+        // Add self-referencing foreign key for Lookups after table exists
+        try
+        {
+            cmd.CommandText = $"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lookups_parent') THEN ALTER TABLE {Q("Lookups")} ADD CONSTRAINT fk_lookups_parent FOREIGN KEY ({Q("ParentId")}) REFERENCES {Q("Lookups")}({Q("Id")}); END IF; END $$;";
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch { }
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Subscriptions') THEN
-    CREATE TABLE {T("Subscriptions")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      package_name VARCHAR(100) NOT NULL, subscription_from DATE NOT NULL,
-      subscription_to DATE NOT NULL, invoice_no VARCHAR(50) NOT NULL,
-      invoice_date DATE NOT NULL, payment_mode_id UUID, remark TEXT,
-      is_active BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_subscriptions_tenant ON {T("Subscriptions")}(tenant_id);
-  END IF;
-END $$;
+        // Add indexes for new tables
+        var indexStatements = new[]
+        {
+            $"CREATE INDEX IF NOT EXISTS idx_lookups_category ON {Q("Lookups")}({Q("Category")})",
+            $"CREATE UNIQUE INDEX IF NOT EXISTS idx_lookups_cat_code ON {Q("Lookups")}({Q("Category")}, {Q("Code")})",
+            $"CREATE INDEX IF NOT EXISTS idx_clients_tenant ON {Q("Clients")}({Q("TenantId")})",
+            $"CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_tenant_code ON {Q("Clients")}({Q("TenantId")}, {Q("ClientCode")})",
+            $"CREATE UNIQUE INDEX IF NOT EXISTS idx_forms_name ON {Q("FormMasters")}({Q("FormName")})",
+            $"CREATE INDEX IF NOT EXISTS idx_routes_tenant ON {Q("Routes")}({Q("TenantId")})",
+            $"CREATE INDEX IF NOT EXISTS idx_geofences_tenant ON {Q("Geofences")}({Q("TenantId")})",
+            $"CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant ON {Q("Subscriptions")}({Q("TenantId")})",
+            $"CREATE UNIQUE INDEX IF NOT EXISTS idx_frm_tenant_role_form ON {Q("FormRoleMappings")}({Q("TenantId")}, {Q("RoleId")}, {Q("FormId")})",
+            $"CREATE UNIQUE INDEX IF NOT EXISTS idx_fcm_tenant_form ON {Q("FormCompanyMappings")}({Q("TenantId")}, {Q("FormId")})",
+            $"CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON {Q("Notifications")}({Q("UserId")}, {Q("IsRead")})",
+        };
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormRoleMappings') THEN
-    CREATE TABLE {T("FormRoleMappings")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      role_id UUID NOT NULL, form_id UUID NOT NULL,
-      can_view BOOLEAN DEFAULT false, can_add BOOLEAN DEFAULT false,
-      can_edit BOOLEAN DEFAULT false, can_delete BOOLEAN DEFAULT false,
-      created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE UNIQUE INDEX idx_frm_tenant_role_form ON {T("FormRoleMappings")}(tenant_id, role_id, form_id);
-  END IF;
-END $$;
+        foreach (var sql in indexStatements)
+        {
+            try { cmd.CommandText = sql; await cmd.ExecuteNonQueryAsync(); }
+            catch { }
+        }
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormCompanyMappings') THEN
-    CREATE TABLE {T("FormCompanyMappings")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      form_id UUID NOT NULL, is_enabled BOOLEAN DEFAULT true,
-      created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE UNIQUE INDEX idx_fcm_tenant_form ON {T("FormCompanyMappings")}(tenant_id, form_id);
-  END IF;
-END $$;
+        // Widen columns that EF Core created too narrow
+        var widenStatements = new[]
+        {
+            $"ALTER TABLE {Q("Tenants")} ALTER COLUMN {Q("CountryCode")} TYPE VARCHAR(10)",
+            $"ALTER TABLE {Q("Tenants")} ALTER COLUMN {Q("Timezone")} TYPE VARCHAR(50)",
+            $"ALTER TABLE {Q("Tenants")} ALTER COLUMN {Q("Currency")} TYPE VARCHAR(10)",
+            $"ALTER TABLE {Q("Tenants")} ALTER COLUMN {Q("Plan")} TYPE VARCHAR(20)",
+            $"ALTER TABLE {Q("Tenants")} ALTER COLUMN {Q("Status")} TYPE VARCHAR(20)",
+            $"ALTER TABLE {Q("Tenants")} ALTER COLUMN {Q("DataResidencyRegion")} TYPE VARCHAR(50)",
+            $"ALTER TABLE {Q("Vehicles")} ALTER COLUMN {Q("Type")} TYPE VARCHAR(50)",
+            $"ALTER TABLE {Q("Vehicles")} ALTER COLUMN {Q("Model")} TYPE VARCHAR(100)",
+            $"ALTER TABLE {Q("Vehicles")} ALTER COLUMN {Q("FuelType")} TYPE VARCHAR(30)",
+            $"ALTER TABLE {Q("Vehicles")} ALTER COLUMN {Q("Status")} TYPE VARCHAR(30)",
+            $"ALTER TABLE {Q("Drivers")} ALTER COLUMN {Q("Status")} TYPE VARCHAR(30)",
+            $"ALTER TABLE {Q("Devices")} ALTER COLUMN {Q("Model")} TYPE VARCHAR(100)",
+            $"ALTER TABLE {Q("Devices")} ALTER COLUMN {Q("Status")} TYPE VARCHAR(30)",
+            $"ALTER TABLE {Q("DeviceVendors")} ALTER COLUMN {Q("Protocol")} TYPE VARCHAR(20)",
+            $"ALTER TABLE {Q("DeviceCommands")} ALTER COLUMN {Q("CommandType")} TYPE VARCHAR(50)",
+            $"ALTER TABLE {Q("DeviceCommands")} ALTER COLUMN {Q("Status")} TYPE VARCHAR(30)",
+            $"ALTER TABLE {Q("Users")} ALTER COLUMN {Q("Email")} TYPE VARCHAR(200)",
+        };
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'FormColumnConfigs') THEN
-    CREATE TABLE {T("FormColumnConfigs")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      form_id UUID NOT NULL, column_name VARCHAR(100) NOT NULL,
-      display_name VARCHAR(100) NOT NULL, is_active BOOLEAN DEFAULT true,
-      sort_order INT DEFAULT 0, created_at TIMESTAMPTZ DEFAULT NOW());
-  END IF;
-END $$;
+        foreach (var sql in widenStatements)
+        {
+            try { cmd.CommandText = sql; await cmd.ExecuteNonQueryAsync(); }
+            catch { }
+        }
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'Notifications') THEN
-    CREATE TABLE {T("Notifications")} (
-      id UUID PRIMARY KEY, tenant_id UUID NOT NULL REFERENCES tenants(id),
-      user_id UUID NOT NULL REFERENCES users(id), title VARCHAR(200) NOT NULL,
-      message TEXT NOT NULL, type VARCHAR(50) NOT NULL, is_read BOOLEAN DEFAULT false,
-      link VARCHAR(500), created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE INDEX idx_notifications_user_read ON {T("Notifications")}(user_id, is_read);
-  END IF;
-END $$;
-";
-        Console.WriteLine("[DB] Creating new tables...");
-        try { await cmd.ExecuteNonQueryAsync(); Console.WriteLine("✅ New tables created"); } catch (Exception ex) { Console.WriteLine($"⚠️ Table creation: {ex.Message}"); }
-        
-        // Widen existing columns that EF Core created too narrow
-        cmd.CommandText = $@"
-ALTER TABLE {T("Tenants")} ALTER COLUMN {T("CountryCode")} TYPE VARCHAR(10);
-ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Timezone")} TYPE VARCHAR(50);
-ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Currency")} TYPE VARCHAR(10);
-ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Plan")} TYPE VARCHAR(20);
-ALTER TABLE {T("Tenants")} ALTER COLUMN {T("Status")} TYPE VARCHAR(20);
-ALTER TABLE {T("Tenants")} ALTER COLUMN {T("DataResidencyRegion")} TYPE VARCHAR(50);
-ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("Type")} TYPE VARCHAR(50);
-ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("Model")} TYPE VARCHAR(100);
-ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("FuelType")} TYPE VARCHAR(30);
-ALTER TABLE {T("Vehicles")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
-ALTER TABLE {T("Drivers")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
-ALTER TABLE {T("Devices")} ALTER COLUMN {T("Model")} TYPE VARCHAR(100);
-ALTER TABLE {T("Devices")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
-ALTER TABLE {T("DeviceVendors")} ALTER COLUMN {T("Protocol")} TYPE VARCHAR(20);
-ALTER TABLE {T("DeviceCommands")} ALTER COLUMN {T("CommandType")} TYPE VARCHAR(50);
-ALTER TABLE {T("DeviceCommands")} ALTER COLUMN {T("Status")} TYPE VARCHAR(30);
-ALTER TABLE {T("Users")} ALTER COLUMN {T("Email")} TYPE VARCHAR(200);
-";
-        try { await cmd.ExecuteNonQueryAsync(); Console.WriteLine("✅ Columns widened"); } catch { /* columns already wide enough */ }
         await conn.CloseAsync();
-        Console.WriteLine("✅ Database schema updated");
+        Console.WriteLine("✅ Database schema updated — all tables and indexes created");
     }
 
     await SeedData.SeedAsync(app.Services);
