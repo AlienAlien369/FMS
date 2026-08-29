@@ -138,6 +138,17 @@ try
             }
         }
 
+        // Fix JSONB columns that should be TEXT (EF Core converters serialize to string)
+        var fixColumns = new[] {
+            $"ALTER TABLE {Q("Lookups")} ALTER COLUMN {Q("Metadata")} TYPE TEXT USING {Q("Metadata")}::text",
+            $"ALTER TABLE {Q("Routes")} ALTER COLUMN {Q("Waypoints")} TYPE TEXT USING {Q("Waypoints")}::text",
+        };
+        foreach (var sql in fixColumns)
+        {
+            try { cmd.CommandText = sql; await cmd.ExecuteNonQueryAsync(); }
+            catch { }
+        }
+
         // Add self-referencing foreign key for Lookups after table exists
         try
         {
