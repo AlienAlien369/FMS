@@ -1,0 +1,16 @@
+# .dockerignore - speed up Docker build
+.git
+.freebuff
+.claude
+.vscode
+*.md
+*.html
+*.log
+docker-compose.yml
+render.yaml
+.env*
+infra/
+tests/
+frontend/
+agent_docs/
+docs/

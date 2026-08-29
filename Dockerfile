@@ -43,7 +43,4 @@ COPY --from=build /app/publish .
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:5000
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
-
 ENTRYPOINT ["dotnet", "FMS.API.dll"]
