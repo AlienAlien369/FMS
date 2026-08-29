@@ -10,13 +10,10 @@ EXPOSE 5000
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution file (remove test project references first)
-COPY FMS.sln .
+# Use production-only solution (no test projects = no missing files)
+COPY FMS.Production.sln .
 
-# Remove test project references from solution so restore doesn't fail
-RUN sed -i '/FMS\.Tests\.Unit/d; /FMS\.Tests\.Integration/d; /tests\\/d' FMS.sln
-
-# Copy ALL project files for restore caching
+# Copy ALL production project files for restore caching
 COPY src/Domain/FMS.Domain.csproj src/Domain/
 COPY src/Application/FMS.Application.csproj src/Application/
 COPY src/Infrastructure/FMS.Infrastructure.csproj src/Infrastructure/
@@ -32,14 +29,14 @@ COPY src/Services/Notification/FMS.Notification.csproj src/Services/Notification
 COPY src/Services/DataCollector/FMS.DataCollector.csproj src/Services/DataCollector/
 
 # Restore (cached layer)
-RUN dotnet restore FMS.sln
+RUN dotnet restore FMS.Production.sln
 
 # Copy all source code
 COPY src/ src/
 
 # Build and publish the API project (which references everything)
 WORKDIR /src/src/API
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish FMS.API.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Final stage
 FROM base AS final
