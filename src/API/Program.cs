@@ -1,3 +1,4 @@
+using FMS.API;
 using FMS.Application;
 using FMS.Infrastructure;
 using FMS.Infrastructure.Persistence;
@@ -58,19 +59,23 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// Auto-migrate database
+// Auto-migrate database and seed sample data
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<FmsDbContext>();
         await db.Database.EnsureCreatedAsync();
-        Console.WriteLine("✅ Database migration completed");
+        Console.WriteLine("✅ Database schema created/verified");
     }
+
+    // Seed sample tenants, users, vehicles, etc.
+    await SeedData.SeedAsync(app.Services);
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"⚠️ Database migration failed: {ex.Message}");
+    Console.WriteLine($"⚠️ Database/seed error: {ex.Message}");
+    Console.WriteLine(ex.StackTrace);
     Console.WriteLine("   App will continue without database — health check will report unhealthy");
 }
 
@@ -83,6 +88,31 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors("FmsCors");
+
+// Global exception handler for proper error responses
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+        var statusCode = exception switch
+        {
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+            KeyNotFoundException => StatusCodes.Status404NotFound,
+            ArgumentException => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError
+        };
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            type = $"https://httpstatuses.com/{statusCode}",
+            title = exception?.Message ?? "An error occurred",
+            status = statusCode
+        });
+    });
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
