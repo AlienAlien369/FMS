@@ -64,3 +64,4 @@ redis-data/
 *.tfstate
 *.tfstate.backup
 .terraform/
+.env.production
