@@ -9,200 +9,200 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    :root{--p:#2563eb;--pd:#1d4ed8;--pl:#3b82f6;--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--t1:#f8fafc;--t2:#94a3b8;--t3:#64748b;--bl:#334155;--ok:#10b981;--er:#ef4444;--wn:#f59e0b;--ac:#6366f1;--red:#dc2626;--red2:#b91c1c}
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow:hidden}
-    /* Login */
-    .login-page{display:flex;min-height:100vh}
-    .login-left{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;background:linear-gradient(135deg,#1e3a8a,#2563eb);position:relative;overflow:hidden}
-    .login-left::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.05),transparent 60%);animation:pulse 8s ease-in-out infinite}
-    @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:.8}}
-    .login-right{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px;background:var(--bg)}
-    .login-ctr{max-width:420px;width:100%}
-    .login-hdr h1{font-size:28px;font-weight:700;margin-bottom:8px}
-    .login-hdr p{color:var(--t2);font-size:15px;margin-bottom:40px}
-    /* Forms */
-    .fg{margin-bottom:16px}
-    .fg label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:6px}
-    .fg label .req{color:var(--er)}
-    .fg input,.fg select,.fg textarea{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--bl);border-radius:8px;color:var(--t1);font-size:14px;font-family:inherit;outline:none;transition:border .2s}
-    .fg input:focus,.fg select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-    .fg select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-    .fg select option{background:var(--bg2)}
-    .fg textarea{resize:vertical;min-height:80px}
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-    /* Buttons */
-    .btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
-    .btn-p{background:var(--red);color:#fff}.btn-p:hover{background:var(--red2)}
-    .btn-o{background:transparent;border:1px solid var(--bl);color:var(--t2)}.btn-o:hover{border-color:var(--t2)}
-    .btn-s{padding:8px 16px;font-size:13px;border-radius:6px}
-    .btn-g{background:var(--ok);color:#fff}.btn-g:hover{opacity:.9}
-    .err{display:none;padding:12px 16px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:var(--er);font-size:14px;margin-bottom:16px}
-    .api-st{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border-radius:8px;border:1px solid var(--bl);font-size:13px;color:var(--t2);margin-bottom:16px}
-    .api-st .dt{width:8px;height:8px;border-radius:50%;background:var(--er)}.api-st .dt.on{background:var(--ok)}
-    .demo{margin-top:24px;padding:16px;background:var(--bg2);border-radius:10px;border:1px solid var(--bl)}
-    .demo h3{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:10px}
-    .cr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:12px}.cr:last-child{border-bottom:none}
-    .cr .tn{color:var(--t3)}.cr .em{color:var(--p);font-weight:500;cursor:pointer}.cr .em:hover{text-decoration:underline}
-    /* App Layout */
-    .app{display:none;height:100vh}.app.on{display:flex}
-    .sb{width:260px;background:var(--bg);border-right:1px solid var(--bl);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
-    .sb-hd{padding:16px;border-bottom:1px solid var(--bl)}
-    .sb-br{display:flex;align-items:center;gap:8px;margin-bottom:10px}.sb-br .lg{font-size:22px}.sb-br .nm{font-size:15px;font-weight:700}
-    .tn-p{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.25);border-radius:6px;font-size:11px;color:var(--pl);font-weight:600;width:100%}
-    .sb-nv{flex:1;padding:8px;overflow-y:auto}
-    .ns{margin-bottom:4px}
-    .nst{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px 3px}
-    .ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .12s;text-decoration:none;margin-bottom:1px}
-    .ni:hover{background:rgba(37,99,235,.08);color:var(--t1)}
-    .ni.act{background:rgba(37,99,235,.15);color:var(--pl);font-weight:600}
-    .ni .ic{width:18px;text-align:center;font-size:14px}
-    .sb-ft{padding:12px 16px;border-top:1px solid var(--bl)}
-    .sb-u{display:flex;align-items:center;gap:8px}
-    .sb-av{width:32px;height:32px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-    .sb-ui{flex:1;min-width:0}.sb-un{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sb-ur{font-size:10px;color:var(--t3)}
-    .lo{padding:5px 10px;background:transparent;border:1px solid var(--bl);border-radius:5px;color:var(--t3);font-size:10px;cursor:pointer;font-family:inherit}.lo:hover{border-color:var(--er);color:var(--er)}
-    .mc{flex:1;display:flex;flex-direction:column;overflow:hidden}
-    .tb{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:var(--bg2);border-bottom:1px solid var(--bl);flex-shrink:0}
-    .pg-t{font-size:18px;font-weight:700}.pg-b{font-size:12px;color:var(--t3)}
-    .ct{flex:1;overflow-y:auto;padding:24px}
-    /* Tables */
-    .tb-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-    .tb-bar input,.tb-bar select{padding:8px 12px;background:var(--bg3);border:1px solid var(--bl);border-radius:6px;color:var(--t1);font-size:12px;font-family:inherit;outline:none}
-    .tb-bar input:focus{border-color:var(--p)}
-    .dt-t{width:100%;border-collapse:collapse;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--bl);font-size:13px}
-    .dt-t th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);background:rgba(30,41,59,.6);border-bottom:1px solid var(--bl)}
-    .dt-t td{padding:10px 16px;border-bottom:1px solid rgba(51,65,85,.3)}
-    .dt-t tr:hover td{background:rgba(37,99,235,.03)}
-    .sb2{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
-    .sb2.ok{background:rgba(16,185,129,.15);color:var(--ok)}.sb2.wn{background:rgba(245,158,11,.15);color:var(--wn)}.sb2.er{background:rgba(239,68,68,.15);color:var(--er)}
-    .sd{width:5px;height:5px;border-radius:50%;background:currentColor}
-    .sp{display:inline-block;width:14px;height:14px;border:2px solid var(--bl);border-top-color:var(--p);border-radius:50%;animation:spi .6s linear infinite}
-    @keyframes spi{to{transform:rotate(360deg)}}
-    .pag{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:12px;color:var(--t3)}
-    /* Stats */
-    .sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-    .sc{background:var(--bg2);border:1px solid var(--bl);border-radius:10px;padding:16px}
-    .sc .si{font-size:20px;margin-bottom:8px}.sc .sv{font-size:24px;font-weight:800;margin-bottom:2px}.sc .sl{font-size:11px;color:var(--t2)}
-    .st{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-    /* Modal */
-    .modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
-    .modal-bg.on{display:flex}
-    .modal{background:var(--bg2);border:1px solid var(--bl);border-radius:12px;width:700px;max-width:95vw;max-height:90vh;overflow-y:auto}
-    .modal-hd{padding:20px 24px;border-bottom:1px solid var(--bl);display:flex;justify-content:space-between;align-items:center}
-    .modal-hd h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
-    .modal-hd .close{background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;padding:4px}.modal-hd .close:hover{color:var(--t1)}
-    .modal-bd{padding:24px}
-    .modal-ft{padding:16px 24px;border-top:1px solid var(--bl);display:flex;gap:8px;justify-content:flex-end}
-    /* Permission Matrix */
-    .perm-tbl{width:100%;border-collapse:collapse;font-size:13px}
-    .perm-tbl th{padding:10px 12px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:#0f172a;border:1px solid var(--bl)}
-    .perm-tbl th:first-child{text-align:left;min-width:200px}
-    .perm-tbl td{padding:8px 12px;text-align:center;border-bottom:1px solid rgba(51,65,85,.3)}
-    .perm-tbl td:first-child{text-align:left;font-weight:500}
-    .perm-tbl tr:hover td{background:rgba(37,99,235,.03)}
-    .perm-tbl input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--p)}
-    /* Toggle */
-    .toggle{position:relative;width:36px;height:20px;cursor:pointer;display:inline-block}
-    .toggle input{opacity:0;width:0;height:0}
-    .toggle .sl{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg3);border-radius:10px;transition:.3s}
-    .toggle .sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
-    .toggle input:checked+.sl{background:var(--ok)}.toggle input:checked+.sl::before{transform:translateX(16px)}
-    /* Settings Cards */
-    .set-card{background:var(--bg2);border:1px solid var(--bl);border-radius:10px;padding:20px;margin-bottom:16px}
-    .set-card h3{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-    .set-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(51,65,85,.3)}.set-row:last-child{border-bottom:none}
-    .set-row .label{font-size:13px;font-weight:500}.set-row .desc{font-size:11px;color:var(--t3);margin-top:1px}
-    .score{display:flex;align-items:center;gap:6px}
-    .score-trk{width:50px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}.score-fl{height:100%;border-radius:2px}
-    .pg-e{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;color:var(--t3)}.pg-e .ic{font-size:40px;margin-bottom:12px}.pg-e .ti{font-size:16px;font-weight:600;color:var(--t2);margin-bottom:6px}.pg-e .ds{font-size:13px;text-align:center;max-width:400px}
-    .empty{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--t3);font-size:13px}
-    .badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
-    @media(max-width:768px){.login-left{display:none}.sb{width:56px}.sb .ni span,.sb .tn-p span:last-child,.sb-br .nm,.sb-ui,.nst{display:none}.sg,.form-row{grid-template-columns:1fr}}
-  </style>
+:root{--p:#2563eb;--pd:#1d4ed8;--pl:#3b82f6;--bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--t1:#f8fafc;--t2:#94a3b8;--t3:#64748b;--bl:#334155;--ok:#10b981;--er:#ef4444;--wn:#f59e0b;--ac:#6366f1;--red:#dc2626;--red2:#b91c1c}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow:hidden}
+.login-page{display:flex;min-height:100vh}
+.login-left{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;background:linear-gradient(135deg,#1e3a8a,#2563eb);position:relative;overflow:hidden}
+.login-left::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.05),transparent 60%);animation:pulse 8s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:.8}}
+.login-right{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px;background:var(--bg)}
+.login-ctr{max-width:420px;width:100%}
+.login-hdr h1{font-size:28px;font-weight:700;margin-bottom:8px}
+.login-hdr p{color:var(--t2);font-size:15px;margin-bottom:40px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:6px}
+.fg label .req{color:var(--er)}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--bl);border-radius:8px;color:var(--t1);font-size:14px;font-family:inherit;outline:none;transition:border .2s}
+.fg input:focus,.fg select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.fg select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.fg select option{background:var(--bg2)}
+.fg textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-p{background:var(--red);color:#fff}.btn-p:hover{background:var(--red2)}
+.btn-o{background:transparent;border:1px solid var(--bl);color:var(--t2)}.btn-o:hover{border-color:var(--t2)}
+.btn-s{padding:8px 16px;font-size:13px;border-radius:6px}
+.btn-g{background:var(--ok);color:#fff}.btn-g:hover{opacity:.9}
+.err{display:none;padding:12px 16px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:var(--er);font-size:14px;margin-bottom:16px}
+.api-st{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border-radius:8px;border:1px solid var(--bl);font-size:13px;color:var(--t2);margin-bottom:16px}
+.api-st .dt{width:8px;height:8px;border-radius:50%;background:var(--er)}.api-st .dt.on{background:var(--ok)}
+.demo{margin-top:24px;padding:16px;background:var(--bg2);border-radius:10px;border:1px solid var(--bl)}
+.demo h3{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:10px}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:12px}.cr:last-child{border-bottom:none}
+.cr .tn{color:var(--t3)}.cr .em{color:var(--p);font-weight:500;cursor:pointer}.cr .em:hover{text-decoration:underline}
+.app{display:none;height:100vh}.app.on{display:flex}
+.sb{width:260px;background:var(--bg);border-right:1px solid var(--bl);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-hd{padding:16px;border-bottom:1px solid var(--bl)}
+.sb-br{display:flex;align-items:center;gap:8px;margin-bottom:10px}.sb-br .lg{font-size:22px}.sb-br .nm{font-size:15px;font-weight:700}
+.tn-p{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.25);border-radius:6px;font-size:11px;color:var(--pl);font-weight:600;width:100%}
+.sb-nv{flex:1;padding:8px;overflow-y:auto}
+.ns{margin-bottom:4px}
+.nst{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px 3px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .12s;text-decoration:none;margin-bottom:1px}
+.ni:hover{background:rgba(37,99,235,.08);color:var(--t1)}
+.ni.act{background:rgba(37,99,235,.15);color:var(--pl);font-weight:600}
+.ni .ic{width:18px;text-align:center;font-size:14px}
+.sb-ft{padding:12px 16px;border-top:1px solid var(--bl)}
+.sb-u{display:flex;align-items:center;gap:8px}
+.sb-av{width:32px;height:32px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.sb-ui{flex:1;min-width:0}.sb-un{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sb-ur{font-size:10px;color:var(--t3)}
+.lo{padding:5px 10px;background:transparent;border:1px solid var(--bl);border-radius:5px;color:var(--t3);font-size:10px;cursor:pointer;font-family:inherit}.lo:hover{border-color:var(--er);color:var(--er)}
+.mc{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tb{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:var(--bg2);border-bottom:1px solid var(--bl);flex-shrink:0}
+.pg-t{font-size:18px;font-weight:700}.pg-b{font-size:12px;color:var(--t3)}
+.ct{flex:1;overflow-y:auto;padding:24px}
+.tb-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.tb-bar input,.tb-bar select{padding:8px 12px;background:var(--bg3);border:1px solid var(--bl);border-radius:6px;color:var(--t1);font-size:12px;font-family:inherit;outline:none}
+.tb-bar input:focus{border-color:var(--p)}
+.dt-t{width:100%;border-collapse:collapse;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--bl);font-size:13px}
+.dt-t th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);background:rgba(30,41,59,.6);border-bottom:1px solid var(--bl)}
+.dt-t td{padding:10px 16px;border-bottom:1px solid rgba(51,65,85,.3)}
+.dt-t tr:hover td{background:rgba(37,99,235,.03)}
+.sb2{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+.sb2.ok{background:rgba(16,185,129,.15);color:var(--ok)}.sb2.wn{background:rgba(245,158,11,.15);color:var(--wn)}.sb2.er{background:rgba(239,68,68,.15);color:var(--er)}
+.sd{width:5px;height:5px;border-radius:50%;background:currentColor}
+.sp{display:inline-block;width:14px;height:14px;border:2px solid var(--bl);border-top-color:var(--p);border-radius:50%;animation:spi .6s linear infinite}
+@keyframes spi{to{transform:rotate(360deg)}}
+.pag{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:12px;color:var(--t3)}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.sc{background:var(--bg2);border:1px solid var(--bl);border-radius:10px;padding:16px}
+.sc .si{font-size:20px;margin-bottom:8px}.sc .sv{font-size:24px;font-weight:800;margin-bottom:2px}.sc .sl{font-size:11px;color:var(--t2)}
+.st{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--bl);border-radius:12px;width:750px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-hd{padding:20px 24px;border-bottom:1px solid var(--bl);display:flex;justify-content:space-between;align-items:center}
+.modal-hd h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.modal-hd .close{background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;padding:4px}.modal-hd .close:hover{color:var(--t1)}
+.modal-bd{padding:24px}
+.modal-ft{padding:16px 24px;border-top:1px solid var(--bl);display:flex;gap:8px;justify-content:flex-end}
+.perm-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.perm-tbl th{padding:10px 12px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:#0f172a;border:1px solid var(--bl)}
+.perm-tbl td{padding:8px 12px;text-align:center;border:1px solid var(--bl)}
+.perm-tbl td:first-child{text-align:left;padding-left:20px}
+.perm-tbl tr:hover td{background:rgba(37,99,235,.05)}
+.set-card{background:var(--bg2);border:1px solid var(--bl);border-radius:10px;padding:20px;margin-bottom:16px}
+.set-card h3{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.set-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(51,65,85,.3)}
+.set-row:last-child{border-bottom:none}
+.set-row .label{font-size:13px;font-weight:500}
+.toggle{position:relative;display:inline-block;width:40px;height:22px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .sl{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg3);border-radius:11px;transition:.3s;border:1px solid var(--bl)}
+.toggle .sl::before{content:'';position:absolute;width:16px;height:16px;left:2px;bottom:2px;background:var(--t3);border-radius:50%;transition:.3s}
+.toggle input:checked+.sl{background:var(--p);border-color:var(--p)}
+.toggle input:checked+.sl::before{transform:translateX(18px);background:#fff}
+.empty{text-align:center;padding:40px;color:var(--t3);font-size:13px}
+.pg-e{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;text-align:center}
+.pg-e .ic{font-size:48px;margin-bottom:16px}
+.pg-e .ti{font-size:18px;font-weight:700;margin-bottom:8px}
+.pg-e .ds{font-size:13px;color:var(--t3);max-width:400px}
+.score{display:flex;align-items:center;gap:8px}
+.score-trk{width:60px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.score-fl{height:100%;border-radius:3px;transition:width .3s}
+</style>
 </head>
 <body>
 <!-- ═══════ LOGIN ═══════ -->
-<div class="login-page" id="loginPage">
+<div id="loginPage" class="login-page">
   <div class="login-left">
-    <div style="position:relative;text-align:center">
-      <div style="font-size:48px;margin-bottom:16px">🚛</div>
-      <div style="font-size:32px;font-weight:800;margin-bottom:8px">RGBSI Fleet Management</div>
-      <div style="font-size:16px;color:rgba(255,255,255,.8);margin-bottom:40px">Multi-Tenant SaaS Platform</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:360px">
-        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">📡</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Real-Time Telemetry</div></div>
-        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">🗺️</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Live Fleet Map</div></div>
-        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">📊</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Analytics & Reports</div></div>
-        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.1)"><div style="font-size:20px;margin-bottom:6px">🔒</div><div style="font-size:12px;color:rgba(255,255,255,.9)">Multi-Tenant Security</div></div>
+    <div style="text-align:center;z-index:1">
+      <div style="font-size:64px;margin-bottom:16px">🚛</div>
+      <h1 style="font-size:32px;font-weight:800;margin-bottom:8px">RGBSI Fleet Management</h1>
+      <p style="color:rgba(255,255,255,.7);font-size:16px">Multi-Tenant SaaS Platform</p>
+      <div style="margin-top:32px;display:flex;gap:24px;justify-content:center;color:rgba(255,255,255,.5);font-size:13px">
+        <span>🌍 Multi-Country</span><span>🏢 Multi-Tenant</span><span>📡 IoT Ready</span>
       </div>
     </div>
   </div>
   <div class="login-right">
     <div class="login-ctr">
-      <div class="login-hdr"><h1>Welcome back</h1><p>Sign in to your fleet dashboard</p></div>
+      <div class="login-hdr"><h1>Welcome back</h1><p>Sign in to your fleet management account</p></div>
       <div class="api-st"><div class="dt" id="apiDot"></div><span id="apiSt">Checking API...</span></div>
       <div class="err" id="errMsg"></div>
       <form id="loginForm" onsubmit="doLogin(event)">
-        <div class="fg"><label>Email Address <span class="req">*</span></label><input type="email" id="email" placeholder="admin@acme-logistics.com" required></div>
-        <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="password" placeholder="Enter your password" required></div>
-        <div class="fg"><label>Tenant</label><select id="tenant"><option value="">Auto-detect from email</option><option value="acme-logistics">Acme Logistics Corp (India)</option><option value="saferide-taxi">SafeRide Taxi Services (USA)</option><option value="gulf-mining">Gulf Mining Group (Saudi Arabia)</option></select></div>
-        <button type="submit" class="btn btn-p" id="loginBtn" style="width:100%;padding:12px;margin-top:8px">Sign In</button>
+        <div class="fg"><label>Email <span class="req">*</span></label><input type="email" id="email" placeholder="admin@acme-logistics.com" required></div>
+        <div class="fg"><label>Password <span class="req">*</span></label><input type="password" id="password" placeholder="••••••••" required></div>
+        <div class="fg"><label>Tenant</label>
+          <select id="tenant"><option value="">Auto-detect from email</option><option value="acme-logistics">Acme Logistics Corp</option><option value="saferide-taxi">SafeRide Taxi Services</option><option value="gulf-mining">Gulf Mining Group</option></select>
+        </div>
+        <button type="submit" id="loginBtn" class="btn btn-p" style="width:100%;margin-top:8px;padding:12px">Sign In</button>
       </form>
-      <div class="demo"><h3>🔑 Demo Credentials</h3>
+      <div class="demo"><h3>DEMO CREDENTIALS</h3>
         <div class="cr"><span class="tn">🇮🇳 Acme Logistics</span><span class="em" onclick="fill('admin@acme-logistics.com','Admin@123','acme-logistics')">admin@acme-logistics.com</span></div>
         <div class="cr"><span class="tn">🇺🇸 SafeRide Taxi</span><span class="em" onclick="fill('admin@saferide-taxi.com','Admin@123','saferide-taxi')">admin@saferide-taxi.com</span></div>
         <div class="cr"><span class="tn">🇸🇦 Gulf Mining</span><span class="em" onclick="fill('admin@gulf-mining.com','Admin@123','gulf-mining')">admin@gulf-mining.com</span></div>
+        <div class="cr"><span class="tn">🇮🇳 Acme Dispatcher</span><span class="em" onclick="fill('dispatcher@acme-logistics.com','Dispatch@123','acme-logistics')">dispatcher@acme-logistics.com</span></div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- ═══════ APP ═══════ -->
-<div class="app" id="appLayout">
-  <aside class="sb">
-    <div class="sb-hd"><div class="sb-br"><span class="lg">🚛</span><span class="nm">FMS</span></div><div class="tn-p"><span>🏢</span> <span id="sbT">—</span></div></div>
-    <nav class="sb-nv" id="sbN"></nav>
-    <div class="sb-ft"><div class="sb-u"><div class="sb-av" id="sbA">?</div><div class="sb-ui"><div class="sb-un" id="sbNm">—</div><div class="sb-ur" id="sbR">—</div></div><button class="lo" onclick="doLogout()">Sign Out</button></div></div>
-  </aside>
+<div id="appLayout" class="app">
+  <div class="sb">
+    <div class="sb-hd">
+      <div class="sb-br"><span class="lg">🚛</span><span class="nm">FMS</span></div>
+      <div class="tn-p"><span>🏢</span><span id="sbT">—</span></div>
+    </div>
+    <div class="sb-nv" id="sbN"></div>
+    <div class="sb-ft">
+      <div class="sb-u">
+        <div class="sb-av" id="sbA">?</div>
+        <div class="sb-ui"><div class="sb-un" id="sbNm">—</div><div class="sb-ur" id="sbR">—</div></div>
+        <button class="lo" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
   <div class="mc">
-    <div class="tb"><div><div class="pg-t" id="pgT">Dashboard</div><div class="pg-b" id="pgB">—</div></div></div>
+    <div class="tb"><div><div class="pg-t" id="pgT">Dashboard</div><div class="pg-b" id="pgB">Overview</div></div></div>
     <div class="ct" id="ct"></div>
   </div>
 </div>
 
 <!-- ═══════ MODAL ═══════ -->
-<div class="modal-bg" id="mBg" onclick="if(event.target===this)closeM()"><div class="modal" id="mC"></div></div>
+<div class="modal-bg" id="mBg" onclick="if(event.target===this)closeM()">
+  <div class="modal"><div id="mC"></div></div>
+</div>
 
 <script>
 const API='https://fms-api-dfcb.onrender.com';
 const NAV={
   'command-center':{l:'Command Center',i:'🎯',p:[{id:'overview',l:'Operations Overview',i:'📋'},{id:'live-map',l:'Live Fleet Map',i:'🗺️'}]},
-  'fleet-intelligence':{l:'Fleet Intelligence',i:'🚛',p:[{id:'vehicles',l:'Vehicle Directory',i:'🚗',b:'vehicles'},{id:'drivers',l:'Driver Hub',i:'👥',b:'drivers'},{id:'fuel',l:'Fuel Analytics',i:'⛽'},{id:'maintenance',l:'Maintenance Studio',i:'🔧'}]},
+  'fleet-intelligence':{l:'Fleet Intelligence',i:'🚛',p:[{id:'vehicles',l:'Vehicle Directory',i:'🚗'},{id:'drivers',l:'Driver Hub',i:'👥'},{id:'fuel',l:'Fuel Analytics',i:'⛽'},{id:'maintenance',l:'Maintenance Studio',i:'🔧'}]},
   'trip-logistics':{l:'Trip & Logistics',i:'📦',p:[{id:'routes',l:'Route Management',i:'🛣️'},{id:'geofences',l:'Geofence Management',i:'📍'},{id:'deliveries',l:'Active Deliveries',i:'🚚'}]},
   'safety-compliance':{l:'Safety & Compliance',i:'🛡️',p:[{id:'incidents',l:'Incident Center',i:'⚠️'}]},
   'device-iot':{l:'Device & IoT',i:'📡',p:[{id:'devices',l:'Device Fleet',i:'🔌'}]},
   'analytics':{l:'Analytics',i:'📊',p:[{id:'insights',l:'Insight Builder',i:'📈'}]},
-  'settings':{l:'Settings',i:'⚙️',p:[{id:'company',l:'Company Configuration',i:'🏢'},{id:'users',l:'User Management',i:'👤'},{id:'roles',l:'Role & Permissions',i:'🔐'},{id:'features',l:'Feature Management',i:'🎛️'},{id:'subscription',l:'Subscription',i:'💳'}]}
+  'settings':{l:'Settings',i:'⚙️',p:[{id:'company',l:'Company Configuration',i:'🏢'},{id:'users',l:'User Management',i:'👤'},{id:'clients',l:'Client Management',i:'🤝'},{id:'roles',l:'Role & Permissions',i:'🔐'},{id:'lookups',l:'Lookup Management',i:'📋'},{id:'forms',l:'Form Registry',i:'📄'},{id:'features',l:'Feature Management',i:'🎛️'},{id:'subscription',l:'Subscription',i:'💳'},{id:'notifications',l:'Notifications',i:'🔔'},{id:'audit',l:'Audit Trail',i:'📝'}]}
 };
 const PLAN={'pro':['command-center','fleet-intelligence','trip-logistics','safety-compliance','device-iot','analytics','settings'],'enterprise':['command-center','fleet-intelligence','trip-logistics','safety-compliance','device-iot','analytics','settings'],'basic':['command-center','fleet-intelligence','settings']};
-let U=null,T=null,pg='overview',map=null,allUsers=[],allRoles=[],allFeatures=[];
+let U=null,T=null,pg='overview',map=null;
 
-// ═══ Auth ═══
-async function chk(){try{const r=await fetch(API+'/health',{signal:AbortSignal.timeout(8000)});if(r.ok){$('apiDot').classList.add('on');$('apiSt').textContent='API connected'}else $('apiSt').textContent='API '+r.status}catch(e){$('apiSt').textContent='API unreachable'}}
 function $(id){return document.getElementById(id)}
 function fill(e,p,t){$('email').value=e;$('password').value=p;$('tenant').value=t}
+async function chk(){try{const r=await fetch(API+'/health',{signal:AbortSignal.timeout(8000)});if(r.ok){$('apiDot').classList.add('on');$('apiSt').textContent='API connected'}else $('apiSt').textContent='API '+r.status}catch(e){$('apiSt').textContent='API unreachable'}}
 async function doLogin(e){e.preventDefault();const b=$('loginBtn'),er=$('errMsg');b.disabled=true;b.innerHTML='<span class="sp"></span> Signing in...';er.style.display='none';try{const body={email:$('email').value,password:$('password').value};const t=$('tenant').value;if(t)body.tenantSubdomain=t;const r=await fetch(API+'/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.title||d.message||'Login failed');localStorage.setItem('fms_token',d.accessToken);localStorage.setItem('fms_user',JSON.stringify(d.user));U=d.user;T=d.accessToken;showDash()}catch(x){er.textContent=x.message;er.style.display='block'}finally{b.disabled=false;b.innerHTML='Sign In'}}
 function doLogout(){localStorage.removeItem('fms_token');localStorage.removeItem('fms_user');U=null;T=null;$('loginPage').style.display='flex';$('appLayout').classList.remove('on');$('loginForm').reset();$('errMsg').style.display='none'}
 function showDash(){$('loginPage').style.display='none';$('appLayout').classList.add('on');$('sbT').textContent=U.tenantName;$('sbNm').textContent=(U.firstName||''+' '+U.lastName||'').trim()||U.email;$('sbR').textContent=U.roleName||'User';$('sbA').textContent=(U.firstName||U.email||'?')[0].toUpperCase();buildNav();navTo('overview')}
-function buildNav(){const nv=$('sbN');const plan=U.plan||'pro';const mods=PLAN[plan]||PLAN.pro;let h='';mods.forEach(m=>{const mod=NAV[m];if(!mod)return;h+=`<div class="ns"><div class="nst">${mod.i} ${mod.l}</div>`;mod.p.forEach(p=>{h+=`<a class="ni ${pg===p.id?'act':''}" onclick="navTo('${p.id}')" data-pg="${p.id}"><span class="ic">${p.i}</span><span>${p.l}</span>${p.b?`<span class="bg" id="bg-${p.b}" style="margin-left:auto;padding:2px 6px;border-radius:8px;font-size:9px;font-weight:700;background:rgba(99,102,241,.2);color:var(--ac)">—</span>`:''}</a>`});h+='</div>'});nv.innerHTML=h}
-
-// ═══ Navigation ═══
-const TITLES={overview:['Command Center','Dashboard / Overview'],'live-map':['Live Fleet Map','Dashboard / Live Map'],vehicles:['Vehicle Directory','Fleet / Vehicles'],drivers:['Driver Hub','Fleet / Drivers'],fuel:['Fuel Analytics','Fleet / Fuel'],maintenance:['Maintenance Studio','Fleet / Maintenance'],routes:['Route Management','Trips / Routes'],geofences:['Geofence Management','Trips / Geofences'],deliveries:['Active Deliveries','Trips / Deliveries'],incidents:['Incident Center','Safety / Incidents'],devices:['Device Fleet','IoT / Devices'],insights:['Insight Builder','Analytics / Insights'],company:['Company Configuration','Settings / Company'],users:['User Management','Settings / Users'],roles:['Role & Permissions','Settings / Roles'],features:['Feature Management','Settings / Features'],subscription:['Subscription','Settings / Subscription']};
+function buildNav(){const nv=$('sbN');const plan=U.plan||'pro';const mods=PLAN[plan]||PLAN.pro;let h='';mods.forEach(m=>{const mod=NAV[m];if(!mod)return;h+=`<div class="ns"><div class="nst">${mod.i} ${mod.l}</div>`;mod.p.forEach(p=>{h+=`<a class="ni ${pg===p.id?'act':''}" onclick="navTo('${p.id}')" data-pg="${p.id}"><span class="ic">${p.i}</span><span>${p.l}</span></a>`});h+='</div>'});nv.innerHTML=h}
+const TITLES={overview:['Command Center','Dashboard / Overview'],'live-map':['Live Fleet Map','Dashboard / Live Map'],vehicles:['Vehicle Directory','Fleet / Vehicles'],drivers:['Driver Hub','Fleet / Drivers'],fuel:['Fuel Analytics','Fleet / Fuel'],maintenance:['Maintenance Studio','Fleet / Maintenance'],routes:['Route Management','Operations / Routes'],geofences:['Geofence Management','Operations / Geofences'],deliveries:['Active Deliveries','Operations / Deliveries'],incidents:['Incident Center','Safety / Incidents'],devices:['Device Fleet','IoT / Devices'],insights:['Insight Builder','Analytics / Insights'],company:['Company Configuration','Settings / Company'],users:['User Management','Settings / Users'],clients:['Client Management','Settings / Clients'],roles:['Role & Permissions','Settings / RBAC'],lookups:['Lookup Management','Settings / Lookups'],forms:['Form Registry','Settings / Forms'],features:['Feature Management','Settings / Features'],subscription:['Subscription','Settings / Billing'],notifications:['Notifications','Settings / Notifications'],audit:['Audit Trail','Settings / Audit']};
 function navTo(p){pg=p;document.querySelectorAll('.ni').forEach(el=>el.classList.toggle('act',el.dataset.pg===p));const[t,c]=TITLES[p]||[p,p];$('pgT').textContent=t;$('pgB').textContent=c;render(p)}
-function render(p){const R={overview:rOverview,'live-map':rLiveMap,vehicles:rVehicles,drivers:rDrivers,devices:rDevices,fuel:rFuel,maintenance:rMaintenance,routes:rRoutes,geofences:rGeofences,deliveries:rDeliveries,incidents:rIncidents,insights:rInsights,company:rCompany,users:rUsers,roles:rRoles,features:rFeatures,subscription:rSubscription};(R[p]||rPlaceholder)($('ct'))}
+function render(p){const R={overview:rOverview,'live-map':rLiveMap,vehicles:rVehicles,drivers:rDrivers,devices:rDevices,fuel:rFuel,maintenance:rMaintenance,routes:rRoutes,geofences:rGeofences,deliveries:rDeliveries,incidents:rIncidents,insights:rInsights,company:rCompany,users:rUsers,clients:rClients,roles:rRoles,lookups:rLookups,forms:rForms,features:rFeatures,subscription:rSubscription,notifications:rNotifications,audit:rAudit};(R[p]||rPlaceholder)($('ct'))}
 
-// ═══ API ═══
+// ═══ API Helpers ═══
 async function apiG(p){try{const r=await fetch(API+p,{headers:{'Authorization':'Bearer '+T}});if(!r.ok)return null;return await r.json()}catch{return null}}
 async function apiP(p,b){try{const r=await fetch(API+p,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},body:JSON.stringify(b)});return{ok:r.ok,data:await r.json()}}catch{return{ok:false,data:{}}}}
 async function apiPut(p,b){try{const r=await fetch(API+p,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+T},body:JSON.stringify(b)});return{ok:r.ok,data:await r.json()}}catch{return{ok:false,data:{}}}}
@@ -210,12 +210,12 @@ async function apiDel(p){try{const r=await fetch(API+p,{method:'DELETE',headers:
 
 // ═══ UI Helpers ═══
 function tbl(h,rows,opts={}){let s=`<table class="dt-t"><thead><tr>`;h.forEach(t=>s+=`<th>${t}</th>`);s+=`</tr></thead><tbody>`;if(!rows||!rows.length)s+=`<tr><td colspan="${h.length}" class="empty">${opts.empty||'No data found'}</td></tr>`;else rows.forEach(r=>s+=`<tr>${r}</tr>`);return s+`</tbody></table>`}
-function badge(s){const c={active:'ok',maintenance:'wn',offline:'er',inactive:'er',online:'ok'}[s?.toLowerCase()]||'wn';return`<span class="sb2 ${c}"><span class="sd"></span>${s||'—'}</span>`}
+function badge(s){const c={active:'ok',maintenance:'wn',offline:'er',inactive:'er',online:'ok',pending:'wn',investigating:'wn',resolved:'ok',closed:'wn',picked_up:'ok',in_transit:'wn',out_for_delivery:'ok',delivered:'ok',failed:'er'}[s?.toLowerCase()]||'wn';return`<span class="sb2 ${c}"><span class="sd"></span>${(s||'—').replace(/_/g,' ')}</span>`}
 function openM(html){$('mC').innerHTML=html;$('mBg').classList.add('on')}
 function closeM(){$('mBg').classList.remove('on')}
-function formField(label,input,req=false){return`<div class="fg"><label>${label}${req?' <span class="req">*</span>':''}</label>${input}</div>`}
-function formSelect(label,options,req=false){return formField(label,`<select>${options.map(o=>`<option value="${o.v||o}">${o.l||o}</option>`).join('')}</select>`,req)}
-function formInput(label,placeholder='',type='text',req=false){return formField(label,`<input type="${type}" placeholder="${placeholder}">`,req)}
+function fi(label,ph='',type='text',req=false,extra=''){return`<div class="fg"><label>${label}${req?' <span class="req">*</span>':''}</label><input type="${type}" placeholder="${ph}" ${extra}></div>`}
+function fs(label,opts,req=false,extra=''){return`<div class="fg"><label>${label}${req?' <span class="req">*</span>':''}</label><select ${extra}>${opts.map(o=>`<option value="${o.v||o}">${o.l||o}</option>`).join('')}</select></div>`}
+function fa(label,ph=''){return`<div class="fg"><label>${label}</label><textarea placeholder="${ph}"></textarea></div>`}
 
 // ═══════════════ CRUD PAGES ═══════════════
 
@@ -226,281 +226,104 @@ async function rOverview(el){
   <div class="st">🚛 Recent Vehicles</div><div id="oTbl"><span class="sp"></span></div>`;
   const v=await apiG('/api/v1/fleet/vehicles');const vs=v?.items||[];const d=await apiG('/api/v1/fleet/drivers');const ds=d?.items||[];
   $('sV').textContent=vs.length;$('sD').textContent=ds.length;$('sDev').textContent=vs.length;$('sOn').textContent=Math.round(vs.length*.8);
-  const bV=$('bg-vehicles'),bD=$('bg-drivers');if(bV)bV.textContent=vs.length;if(bD)bD.textContent=ds.length;
   $('oTbl').innerHTML=tbl(['Vehicle #','Type','Model','Status'],vs.slice(0,5).map(v=>`<td style="font-weight:600">${v.vehicleNumber||'—'}</td><td>${v.type||'—'}</td><td>${v.model||'—'}</td><td>${badge(v.status)}</td>`));
   setTimeout(initMap,200);
 }
 async function rLiveMap(el){el.innerHTML=`<div class="st">🗺️ Live Fleet Map</div><div id="fullMap" style="height:calc(100vh - 160px);border-radius:10px;border:1px solid var(--bl);z-index:0"></div>`;setTimeout(()=>initMap('fullMap',true),100)}
+
+// ─── VEHICLES (CRUD) ───
 async function rVehicles(el){
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">🚛 Vehicle Directory</div><button class="btn btn-p btn-s" onclick="showVehicleForm()">+ Add Vehicle</button></div><div class="tb-bar"><input type="text" placeholder="Search vehicles..." id="vSearch" oninput="loadVehicles()"><select id="vStatus" onchange="loadVehicles()"><option value="">All Status</option><option value="active">Active</option><option value="maintenance">Maintenance</option><option value="inactive">Inactive</option></select></div><div id="vTbl"><span class="sp"></span></div>`;await loadVehicles()}
-async function loadVehicles(){const v=await apiG('/api/v1/fleet/vehicles');const vs=v?.items||[];$('vTbl').innerHTML=tbl(['Vehicle #','Type','Model','Year','Fuel','Status','Actions'],vs.map(v=>`<td style="font-weight:600">${v.vehicleNumber||'—'}</td><td>${v.type||'—'}</td><td>${v.model||'—'}</td><td>${v.year||'—'}</td><td>${v.fuelType||'—'}</td><td>${badge(v.status)}</td><td><button class="btn btn-o btn-s" onclick="showVehicleForm('${v.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)" onclick="delVehicle('${v.id}','${v.vehicleNumber}')">Del</button></td>`),{empty:'No vehicles found. Click "+ Add Vehicle" to create one.'})}
-function showVehicleForm(id){
-  openM(`<div class="modal-hd"><h2>🚛 ${id?'Edit':'Add'} Vehicle</h2><button class="close" onclick="closeM()">&times;</button></div>
-  <div class="modal-bd"><div class="form-row">
-    ${formInput('Vehicle Number *','MH-01-AB-1234','text',true)}
-    ${formSelect('Type *',['Truck','Sedan','SUV','Tanker','Container','Refrigerated','Heavy Equipment','Support Vehicle'],true)}
-  </div><div class="form-row">
-    ${formInput('Model *','Tata Prima 2525.K','text',true)}
-    ${formInput('Year *','2024','number',true)}
-  </div><div class="form-row">
-    ${formSelect('Fuel Type *',['Diesel','Petrol','CNG','Electric','Hybrid'],true)}
-    ${formSelect('Status *',['Active','Maintenance','Inactive'],true)}
-  </div></div>
-  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveVehicle('${id||''}')">Submit</button></div>`);
-}
-async function saveVehicle(id){const body={vehicleNumber:$('mC').querySelectorAll('input')[0].value,type:$('mC').querySelectorAll('select')[0].value,model:$('mC').querySelectorAll('input')[1].value,year:parseInt($('mC').querySelectorAll('input')[2].value),fuelType:$('mC').querySelectorAll('select')[1].value,status:$('mC').querySelectorAll('select')[2].value.toLowerCase()};const r=await apiP('/api/v1/fleet/vehicles',body);if(r.ok){closeM();loadVehicles()}else alert(r.data.title||'Failed')}
-async function delVehicle(id,num){if(!confirm(`Delete vehicle ${num}?`))return;await apiDel('/api/v1/fleet/vehicles/'+id);loadVehicles()}
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">🚛 Vehicle Directory</div><button class="btn btn-p btn-s" onclick="showVehicleForm()">+ Add Vehicle</button></div><div class="tb-bar"><input type="text" placeholder="Search vehicles..." oninput="loadVehicles(this.value)"></div><div id="vTbl"><span class="sp"></span></div>`;await loadVehicles()}
+async function loadVehicles(search=''){const v=await apiG('/api/v1/fleet/vehicles'+(search?'?search='+encodeURIComponent(search):''));const vs=v?.items||[];$('vTbl').innerHTML=tbl(['Vehicle #','Type','Model','Year','Fuel','Status','Actions'],vs.map(v=>`<td style="font-weight:600">${v.vehicleNumber||'—'}</td><td>${v.type||'—'}</td><td>${v.model||'—'}</td><td>${v.year||'—'}</td><td>${v.fuelType||'—'}</td><td>${badge(v.status)}</td><td><button class="btn btn-o btn-s" onclick="showVehicleForm('${v.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)" onclick="delVehicle('${v.id}','${v.vehicleNumber}')">Del</button></td>`),{empty:'No vehicles found. Click "+ Add Vehicle" to create one.'})}
+function showVehicleForm(id){openM(`<div class="modal-hd"><h2>🚛 ${id?'Edit':'Add'} Vehicle</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('Vehicle Number *','MH-01-AB-1234','text',true)}${fs('Type *',[{v:'Truck',l:'Truck'},{v:'Sedan',l:'Sedan'},{v:'SUV',l:'SUV'},{v:'Tanker',l:'Tanker'},{v:'Container',l:'Container'},{v:'Refrigerated',l:'Refrigerated'},{v:'Heavy Equipment',l:'Heavy Equipment'},{v:'Support Vehicle',l:'Support Vehicle'}],true)}</div><div class="form-row">${fi('Model *','Tata Prima 2525.K','text',true)}${fi('Year *','2024','number',true)}</div><div class="form-row">${fs('Fuel Type *',[{v:'Diesel',l:'Diesel'},{v:'Petrol',l:'Petrol'},{v:'CNG',l:'CNG'},{v:'Electric',l:'Electric'},{v:'Hybrid',l:'Hybrid'}],true)}${fs('Status *',[{v:'active',l:'Active'},{v:'maintenance',l:'Maintenance'},{v:'inactive',l:'Inactive'}],true)}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveVehicle('${id||''}')">Submit</button></div>`)}
+async function saveVehicle(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelectorAll('select');const body={vehicleNumber:i[0].value,type:s[0].value,model:i[1].value,year:parseInt(i[2].value),fuelType:s[1].value,status:s[2].value};const r=id?await apiPut('/api/v1/fleet/vehicles/'+id,body):await apiP('/api/v1/fleet/vehicles',body);if(r.ok){closeM();loadVehicles()}else alert(r.data.title||'Failed')}
+async function delVehicle(id,num){if(!confirm('Delete vehicle '+num+'?'))return;await apiDel('/api/v1/fleet/vehicles/'+id);loadVehicles()}
 
-// ─── DRIVERS ───
-async function rDrivers(el){
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">👥 Driver Hub</div><button class="btn btn-p btn-s" onclick="showDriverForm()">+ Add Driver</button></div><div id="dTbl"><span class="sp"></span></div>`;
-  const d=await apiG('/api/v1/fleet/drivers');const ds=d?.items||[];
-  $('dTbl').innerHTML=tbl(['Name','License #','Phone','Score','Status','Actions'],ds.map(d=>{const nm=`${d.firstName||''} ${d.lastName||''}`.trim()||'—';const sc=d.behaviorScore||0;const c=sc>=90?'var(--ok)':sc>=75?'var(--wn)':'var(--er)';return`<td style="font-weight:600">${nm}</td><td>${d.licenseNumber||'—'}</td><td>${d.phone||'—'}</td><td><div class="score"><div class="score-trk"><div class="score-fl" style="width:${sc}%;background:${c}"></div></div><span style="font-size:11px;font-weight:600;color:${c}">${sc}</span></div></td><td>${badge(d.status)}</td><td><button class="btn btn-o btn-s" onclick="showDriverForm('${d.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)">Del</button></td>`}),{empty:'No drivers found'});
-}
-function showDriverForm(id){
-  openM(`<div class="modal-hd"><h2>👥 ${id?'Edit':'Add'} Driver</h2><button class="close" onclick="closeM()">&times;</button></div>
-  <div class="modal-bd"><div class="form-row">
-    ${formInput('First Name *','Suresh','text',true)}
-    ${formInput('Last Name *','Patil','text',true)}
-  </div><div class="form-row">
-    ${formInput('License Number *','MH-DRV-001','text',true)}
-    ${formInput('Phone *','+91-9876543210','tel',true)}
-  </div><div class="form-row">
-    ${formInput('License Expiry','2028-01-01','date')}
-    ${formSelect('Status *',['Active','Inactive'],true)}
-  </div></div>
-  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveDriver('${id||''}')">Submit</button></div>`);
-}
-async function saveDriver(id){const inputs=$('mC').querySelectorAll('input');const sels=$('mC').querySelectorAll('select');const body={firstName:inputs[0].value,lastName:inputs[1].value,licenseNumber:inputs[2].value,phone:inputs[3].value,licenseExpiry:inputs[4].value,status:sels[0].value.toLowerCase()};await apiP('/api/v1/fleet/drivers',body);closeM();rDrivers($('ct'))}
+// ─── DRIVERS (CRUD) ───
+async function rDrivers(el){el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">👥 Driver Hub</div><button class="btn btn-p btn-s" onclick="showDriverForm()">+ Add Driver</button></div><div id="dTbl"><span class="sp"></span></div>`;const d=await apiG('/api/v1/fleet/drivers');const ds=d?.items||[];$('dTbl').innerHTML=tbl(['Name','License #','Phone','Score','Status','Actions'],ds.map(d=>{const nm=`${d.firstName||''} ${d.lastName||''}`.trim()||'—';const sc=d.behaviorScore||0;const c=sc>=90?'var(--ok)':sc>=75?'var(--wn)':'var(--er)';return`<td style="font-weight:600">${nm}</td><td>${d.licenseNumber||'—'}</td><td>${d.phone||'—'}</td><td><div class="score"><div class="score-trk"><div class="score-fl" style="width:${sc}%;background:${c}"></div></div><span style="font-size:11px;font-weight:600;color:${c}">${sc}</span></div></td><td>${badge(d.status)}</td><td><button class="btn btn-o btn-s" onclick="showDriverForm('${d.id}')">Edit</button></td>`}),{empty:'No drivers found'})}
+function showDriverForm(id){openM(`<div class="modal-hd"><h2>👥 ${id?'Edit':'Add'} Driver</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('First Name *','Suresh','text',true)}${fi('Last Name *','Patil','text',true)}</div><div class="form-row">${fi('License Number *','MH-DRV-001','text',true)}${fi('Phone *','+91-9876543210','tel',true)}</div><div class="form-row">${fi('License Expiry','2028-01-01','date')}${fs('Status *',[{v:'active',l:'Active'},{v:'inactive',l:'Inactive'}],true)}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveDriver('${id||''}')">Submit</button></div>`)}
+async function saveDriver(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelectorAll('select');const body={firstName:i[0].value,lastName:i[1].value,licenseNumber:i[2].value,phone:i[3].value,status:s[0].value};await apiP('/api/v1/fleet/drivers',body);closeM();rDrivers($('ct'))}
 
-// ─── DEVICES ───
-async function rDevices(el){
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📡 Device Fleet</div><button class="btn btn-p btn-s" onclick="showDeviceForm()">+ Add Device</button></div><div id="dvTbl"><span class="sp"></span></div>`;
-  const d=await apiG('/api/v1/fleet/devices');const ds=d?.items||[];
-  $('dvTbl').innerHTML=tbl(['IMEI','Model','Serial','Speed','Battery','Status','Actions'],ds.map(d=>`<td style="font-family:monospace;font-size:11px">${d.imei||'—'}</td><td>${d.model||'—'}</td><td>${d.serialNumber||'—'}</td><td>${d.lastSpeed||0} km/h</td><td>${d.batteryLevel||0}%</td><td>${badge(d.status)}</td><td><button class="btn btn-o btn-s" onclick="showDeviceForm('${d.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)">Del</button></td>`),{empty:'No devices found'});
-}
-function showDeviceForm(id){
-  openM(`<div class="modal-hd"><h2>📡 ${id?'Edit':'Add'} Device</h2><button class="close" onclick="closeM()">&times;</button></div>
-  <div class="modal-bd"><div class="form-row">
-    ${formInput('IMEI *','867959033200001','text',true)}
-    ${formInput('Serial Number *','IT-VT300-001','text',true)}
-  </div><div class="form-row">
-    ${formInput('Model *','iTriangle VT300','text',true)}
-    ${formSelect('Status *',['Active','Offline','Maintenance'],true)}
-  </div></div>
-  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s">Submit</button></div>`);
-}
+// ─── DEVICES (CRUD) ───
+async function rDevices(el){el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📡 Device Fleet</div><button class="btn btn-p btn-s" onclick="showDeviceForm()">+ Add Device</button></div><div id="dvTbl"><span class="sp"></span></div>`;const d=await apiG('/api/v1/fleet/devices');const ds=d?.items||[];$('dvTbl').innerHTML=tbl(['IMEI','Model','Serial','Speed','Battery','Status','Actions'],ds.map(d=>`<td style="font-family:monospace;font-size:11px">${d.imei||'—'}</td><td>${d.model||'—'}</td><td>${d.serialNumber||'—'}</td><td>${d.lastSpeed||0} km/h</td><td>${d.batteryLevel||0}%</td><td>${badge(d.status)}</td><td><button class="btn btn-o btn-s" onclick="showDeviceForm('${d.id}')">Edit</button></td>`),{empty:'No devices found'})}
+function showDeviceForm(id){openM(`<div class="modal-hd"><h2>📡 ${id?'Edit':'Add'} Device</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('IMEI *','867959033200001','text',true)}${fi('Serial Number *','IT-VT300-001','text',true)}</div><div class="form-row">${fi('Model *','iTriangle VT300','text',true)}${fs('Status *',[{v:'active',l:'Active'},{v:'offline',l:'Offline'},{v:'maintenance',l:'Maintenance'}],true)}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s">Submit</button></div>`)}
 
-// ─── ROUTES ───
-async function rRoutes(el){
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">🛣️ Route Management</div><button class="btn btn-p btn-s" onclick="showRouteForm()">+ Create Route</button></div>
-  <div class="set-card"><h3>🗺️ Route Map</h3><div id="routeMap" style="height:300px;border-radius:8px;z-index:0"></div></div>
-  <div id="rTbl"></div>`;
-  $('rTbl').innerHTML=tbl(['Route Name','Start','End','Type','Distance','Status','Actions'],[
-    `<td style="font-weight:600">Mumbai-Pune Express</td><td>Mumbai</td><td>Pune</td><td>Fixed</td><td>150 km</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
-    `<td style="font-weight:600">Delhi-Jaipur Highway</td><td>Delhi</td><td>Jaipur</td><td>Dynamic</td><td>280 km</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
-  ]);
-  setTimeout(()=>{const c=document.getElementById('routeMap');if(c&&!map){map=L.map('routeMap').setView([20.5,78.9],5);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map)}},200);
-}
-function showRouteForm(){
-  openM(`<div class="modal-hd"><h2>🛣️ Create Route</h2><button class="close" onclick="closeM()">&times;</button></div>
-  <div class="modal-bd"><div class="form-row">
-    ${formInput('Start Location *','Enter start address','text',true)}
-    ${formInput('End Location *','Enter end address','text',true)}
-  </div><div class="form-row">
-    ${formInput('Route Name *','Mumbai-Pune Express','text',true)}
-    ${formSelect('Route Type *',['Fixed','Dynamic','Roundtrip'],true)}
-  </div><div class="form-row">
-    ${formInput('Waypoints','Via point addresses')}
-    ${formInput('Estimated Distance (km)','150','number')}
-  </div></div>
-  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="closeM()">Submit</button></div>`);
-}
+// ─── ROUTES (CRUD — Live API) ───
+async function rRoutes(el){el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">🛣️ Route Management</div><button class="btn btn-p btn-s" onclick="showRouteForm()">+ Create Route</button></div><div id="routeMap" style="height:300px;border-radius:10px;border:1px solid var(--bl);margin-bottom:16px;z-index:0"></div><div id="rTbl"><span class="sp"></span></div>`;const r=await apiG('/api/v1/routes');const rs=r?.items||[];$('rTbl').innerHTML=tbl(['Route Name','Start','End','Distance (km)','Duration (min)','Actions'],rs.map(r=>`<td style="font-weight:600">${r.routeName}</td><td>${r.startLocation}</td><td>${r.endLocation}</td><td>${r.distanceKm||'—'}</td><td>${r.estimatedDurationMin||'—'}</td><td><button class="btn btn-o btn-s" onclick="showRouteForm('${r.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)" onclick="delRoute('${r.id}','${r.routeName}')">Del</button></td>`),{empty:'No routes found. Click "+ Create Route" to add one.'});setTimeout(()=>{const c=document.getElementById('routeMap');if(c){map=L.map('routeMap').setView([20.5,78.9],5);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map)}},200)}
+function showRouteForm(id){openM(`<div class="modal-hd"><h2>🛣️ ${id?'Edit':'Create'} Route</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('Route Name *','Mumbai-Pune Express','text',true)}${fs('Route Type *',[{v:'fixed',l:'Fixed'},{v:'dynamic',l:'Dynamic'},{v:'roundtrip',l:'Round Trip'},{v:'milkrun',l:'Milk Run'},{v:'express',l:'Express'}],true)}</div><div class="form-row">${fi('Start Location *','Mumbai, Maharashtra','text',true)}${fi('End Location *','Pune, Maharashtra','text',true)}</div><div class="form-row">${fi('Start Latitude','19.076','number')}${fi('Start Longitude','72.877','number')}</div><div class="form-row">${fi('End Latitude','18.520','number')}${fi('End Longitude','73.856','number')}</div><div class="form-row">${fi('Distance (km)','150','number')}${fi('Estimated Duration (min)','180','number')}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveRoute('${id||''}')">Submit</button></div>`)}
+async function saveRoute(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelector('select');const body={routeName:i[0].value,startLocation:i[2].value,endLocation:i[3].value,startLatitude:parseFloat(i[4].value)||null,startLongitude:parseFloat(i[5].value)||null,endLatitude:parseFloat(i[6].value)||null,endLongitude:parseFloat(i[7].value)||null,routeTypeId:null,distanceKm:parseFloat(i[8].value)||null,estimatedDurationMin:parseInt(i[9].value)||null};const r=id?await apiPut('/api/v1/routes/'+id,body):await apiP('/api/v1/routes',body);if(r.ok){closeM();rRoutes($('ct'))}else alert(r.data.title||'Failed')}
+async function delRoute(id,name){if(!confirm('Delete route '+name+'?'))return;await apiDel('/api/v1/routes/'+id);rRoutes($('ct'))}
 
-// ─── GEOFENCES ───
-async function rGeofences(el){
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📍 Geofence Management</div><button class="btn btn-p btn-s" onclick="showGeoForm()">+ Create Geofence</button></div>
-  <div class="set-card"><div id="geoMap" style="height:350px;border-radius:8px;z-index:0"></div></div>
-  <div id="geoTbl"></div>`;
-  $('geoTbl').innerHTML=tbl(['Geofence Name','Location Type','Radius (m)','Color','Status','Actions'],[
-    `<td style="font-weight:600">Mumbai Warehouse</td><td>Plant</td><td>500</td><td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#3b82f6"></span> Blue</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
-    `<td style="font-weight:600">Pune Distribution Center</td><td>Warehouse</td><td>300</td><td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#10b981"></span> Green</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)">Del</button></td>`,
-  ]);
-  setTimeout(()=>{const c=document.getElementById('geoMap');if(c&&!map){map=L.map('geoMap').setView([19.076,72.877],11);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);L.circle([19.076,72.877],{color:'#3b82f6',fillColor:'#3b82f6',fillOpacity:.15,radius:500}).addTo(map).bindPopup('<b>Mumbai Warehouse</b><br>500m radius')}},200);
-}
-function showGeoForm(){
-  openM(`<div class="modal-hd"><h2>📍 Create Geofence</h2><button class="close" onclick="closeM()">&times;</button></div>
-  <div class="modal-bd"><div class="form-row">
-    ${formInput('Geofence Name *','Mumbai Warehouse','text',true)}
-    ${formSelect('Location Type *',['Plant','Warehouse','Customer Location','Vendor Location','Checkpost'],true)}
-  </div><div class="form-row">
-    ${formInput('Search Address','San Marino')}
-    ${formInput('Radius (m) *','500','number',true)}
-  </div><div class="form-row">
-    ${formSelect('Color *',['Blue','Green','Red','Yellow','Orange','Purple'],true)}
-    ${formInput('Latitude','19.076')}
-  </div></div>
-  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="closeM()">Submit</button></div>`);
-}
+// ─── GEOFENCES (CRUD — Live API) ───
+async function rGeofences(el){el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📍 Geofence Management</div><button class="btn btn-p btn-s" onclick="showGeoForm()">+ Create Geofence</button></div><div id="geoMap" style="height:350px;border-radius:10px;border:1px solid var(--bl);margin-bottom:16px;z-index:0"></div><div id="geoTbl"><span class="sp"></span></div>`;const r=await apiG('/api/v1/geofences');const rs=r?.items||[];$('geoTbl').innerHTML=tbl(['Name','Location Type','Radius (m)','Color','Actions'],rs.map(r=>`<td style="font-weight:600">${r.name}</td><td>${r.locationTypeId||'—'}</td><td>${r.radiusMeters}</td><td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${r.color.toLowerCase()};vertical-align:middle;margin-right:4px"></span>${r.color}</td><td><button class="btn btn-o btn-s" onclick="showGeoForm('${r.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)" onclick="delGeo('${r.id}','${r.name}')">Del</button></td>`),{empty:'No geofences found. Click "+ Create Geofence" to add one.'});setTimeout(()=>{const c=document.getElementById('geoMap');if(c){map=L.map('geoMap').setView([19.076,72.877],11);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);rs.forEach(g=>{L.circle([g.latitude,g.longitude],{color:g.color,fillColor:g.color,fillOpacity:.15,radius:g.radiusMeters}).addTo(map).bindPopup('<b>'+g.name+'</b><br>'+g.radiusMeters+'m radius')})}},200)}
+function showGeoForm(id){openM(`<div class="modal-hd"><h2>📍 ${id?'Edit':'Create'} Geofence</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('Geofence Name *','Mumbai Warehouse','text',true)}${fs('Color *',[{v:'Blue',l:'Blue'},{v:'Green',l:'Green'},{v:'Red',l:'Red'},{v:'Yellow',l:'Yellow'},{v:'Orange',l:'Orange'},{v:'Purple',l:'Purple'}],true)}</div><div class="form-row">${fi('Search Address','San Marino')}${fs('Location Type *',[{v:'Plant',l:'Plant'},{v:'Warehouse',l:'Warehouse'},{v:'Customer Site',l:'Customer Site'},{v:'Yard',l:'Yard'},{v:'Port',l:'Port'}],true)}</div><div class="form-row">${fi('Latitude *','19.076','number',true)}${fi('Longitude *','72.877','number',true)}</div><div class="form-row">${fi('Radius (m) *','500','number',true)}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveGeo('${id||''}')">Submit</button></div>`)}
+async function saveGeo(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelectorAll('select');const body={name:i[0].value,color:s[0].value,address:i[2].value,locationTypeId:null,latitude:parseFloat(i[4].value)||0,longitude:parseFloat(i[5].value)||0,radiusMeters:parseFloat(i[6].value)||500};const r=id?await apiPut('/api/v1/geofences/'+id,body):await apiP('/api/v1/geofences',body);if(r.ok){closeM();rGeofences($('ct'))}else alert(r.data.title||'Failed')}
+async function delGeo(id,name){if(!confirm('Delete geofence '+name+'?'))return;await apiDel('/api/v1/geofences/'+id);rGeofences($('ct'))}
 
 // ─── DELIVERIES ───
-async function rDeliveries(el){
-  el.innerHTML=`<div class="st">🚚 Active Deliveries</div><div id="dlTbl"></div>`;
-  $('dlTbl').innerHTML=tbl(['Trip #','Vehicle','Driver','Origin','Destination','ETA','Status'],[
-    `<td style="font-weight:600">TRP-001</td><td>MH-01-AB-1234</td><td>Suresh Patil</td><td>Mumbai</td><td>Pune</td><td>2026-08-30 14:00</td><td>${badge('active')}</td>`,
-    `<td style="font-weight:600">TRP-002</td><td>DL-01-IJ-7890</td><td>Arun Desai</td><td>Delhi</td><td>Jaipur</td><td>2026-08-30 18:30</td><td>${badge('maintenance')}</td>`,
-  ]);
-}
+async function rDeliveries(el){el.innerHTML=`<div class="st">🚚 Active Deliveries</div><div id="dlTbl"></div>`;$('dlTbl').innerHTML=tbl(['Trip #','Vehicle','Driver','Origin','Destination','ETA','Status'],[`<td style="font-weight:600">TRP-001</td><td>MH-01-AB-1234</td><td>Suresh Patil</td><td>Mumbai</td><td>Pune</td><td>2026-08-30 14:00</td><td>${badge('in_transit')}</td>`,`<td style="font-weight:600">TRP-002</td><td>DL-01-IJ-7890</td><td>Arun Desai</td><td>Delhi</td><td>Jaipur</td><td>2026-08-30 18:30</td><td>${badge('pending')}</td>`])}
 
 // ─── INCIDENTS ───
-async function rIncidents(el){
-  el.innerHTML=`<div class="st">⚠️ Incident Center</div><div id="incTbl"></div>`;
-  $('incTbl').innerHTML=tbl(['Date','Vehicle','Type','Severity','Driver','Status','Actions'],[
-    `<td>2026-08-28</td><td>MH-01-AB-1234</td><td>Hard Braking</td><td><span class="sb2 wn"><span class="sd"></span>Medium</span></td><td>Suresh Patil</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">View</button></td>`,
-    `<td>2026-08-27</td><td>DL-01-IJ-7890</td><td>Overspeed</td><td><span class="sb2 er"><span class="sd"></span>High</span></td><td>Arun Desai</td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">View</button></td>`,
-    `<td>2026-08-25</td><td>MH-02-CD-5678</td><td>Geofence Exit</td><td><span class="sb2 wn"><span class="sd"></span>Low</span></td><td>Vikram Singh</td><td>${badge('maintenance')}</td><td><button class="btn btn-o btn-s">View</button></td>`,
-  ]);
-}
+async function rIncidents(el){el.innerHTML=`<div class="st">⚠️ Incident Center</div><div id="incTbl"></div>`;$('incTbl').innerHTML=tbl(['Date','Vehicle','Type','Severity','Driver','Status','Actions'],[`<td>2026-08-28</td><td>MH-01-AB-1234</td><td>Hard Braking</td><td><span class="sb2 wn"><span class="sd"></span>Medium</span></td><td>Suresh Patil</td><td>${badge('investigating')}</td><td><button class="btn btn-o btn-s">View</button></td>`,`<td>2026-08-27</td><td>DL-01-IJ-7890</td><td>Overspeed</td><td><span class="sb2 er"><span class="sd"></span>High</span></td><td>Arun Desai</td><td>${badge('reported')}</td><td><button class="btn btn-o btn-s">View</button></td>`])}
 
 // ─── FUEL / MAINTENANCE / INSIGHTS ───
-function rFuel(el){el.innerHTML=`<div class="st">⛽ Fuel Analytics</div><div class="sg"><div class="sc"><div class="si">⛽</div><div class="sv">—</div><div class="sl">Avg Consumption</div></div><div class="sc"><div class="si">💰</div><div class="sv">—</div><div class="sl">Monthly Cost</div></div><div class="sc"><div class="si">📉</div><div class="sv">—</div><div class="sl">Waste Detected</div></div><div class="sc"><div class="si">🎯</div><div class="sv">—</div><div class="sl">Efficiency Score</div></div></div><div class="pg-e"><div class="ic">⛽</div><div class="ti">Fuel Analytics</div><div class="ds">Connect IoT fuel sensors for real-time monitoring. Data from devices will populate this dashboard automatically.</div></div>`}
-function rMaintenance(el){el.innerHTML=`<div class="st">🔧 Maintenance Studio</div><div id="mtTbl"></div>`;$('mtTbl').innerHTML=tbl(['Vehicle','Service Type','Scheduled','Priority','Status','Actions'],[`<td style="font-weight:600">MH-01-AB-1234</td><td>Oil Change</td><td>2026-09-15</td><td><span class="sb2 wn"><span class="sd"></span>Medium</span></td><td>${badge('active')}</td><td><button class="btn btn-o btn-s">Edit</button></td>`,`<td style="font-weight:600">KA-01-GH-3456</td><td>Brake Inspection</td><td>2026-09-20</td><td><span class="sb2 er"><span class="sd"></span>High</span></td><td>${badge('maintenance')}</td><td><button class="btn btn-o btn-s">Edit</button></td>`])}
-function rInsights(el){el.innerHTML=`<div class="st">📈 Insight Builder</div><div class="sg"><div class="sc"><div class="si">📊</div><div class="sv">—</div><div class="sl">Total Trips</div></div><div class="sc"><div class="si">⏱️</div><div class="sv">—</div><div class="sl">Avg Trip Time</div></div><div class="sc"><div class="si">🛣️</div><div class="sv">—</div><div class="sl">Total Distance</div></div><div class="sc"><div class="si">⭐</div><div class="sv">—</div><div class="sl">Safety Score</div></div></div><div class="pg-e"><div class="ic">📈</div><div class="ti">Insight Builder</div><div class="ds">Build custom reports from fleet data. Connect to BI tools for advanced analytics.</div></div>`}
+function rFuel(el){el.innerHTML=`<div class="st">⛽ Fuel Analytics</div><div class="sg"><div class="sc"><div class="si">⛽</div><div class="sv">—</div><div class="sl">Avg Consumption</div></div><div class="sc"><div class="si">💰</div><div class="sv">—</div><div class="sl">Monthly Cost</div></div><div class="sc"><div class="si">📉</div><div class="sv">—</div><div class="sl">Waste Detected</div></div><div class="sc"><div class="si">🎯</div><div class="sv">—</div><div class="sl">Efficiency Score</div></div></div><div class="pg-e"><div class="ic">⛽</div><div class="ti">Fuel Analytics</div><div class="ds">Connect IoT fuel sensors for real-time monitoring.</div></div>`}
+function rMaintenance(el){el.innerHTML=`<div class="st">🔧 Maintenance Studio</div><div id="mtTbl"></div>`;$('mtTbl').innerHTML=tbl(['Vehicle','Service Type','Scheduled','Priority','Status'],[`<td style="font-weight:600">MH-01-AB-1234</td><td>Oil Change</td><td>2026-09-15</td><td><span class="sb2 wn"><span class="sd"></span>Medium</span></td><td>${badge('pending')}</td>`,`<td style="font-weight:600">KA-01-GH-3456</td><td>Brake Inspection</td><td>2026-09-20</td><td><span class="sb2 er"><span class="sd"></span>High</span></td><td>${badge('reported')}</td>`])}
+function rInsights(el){el.innerHTML=`<div class="st">📈 Insight Builder</div><div class="sg"><div class="sc"><div class="si">📊</div><div class="sv">—</div><div class="sl">Total Trips</div></div><div class="sc"><div class="si">⏱️</div><div class="sv">—</div><div class="sl">Avg Trip Time</div></div><div class="sc"><div class="si">🛣️</div><div class="sv">—</div><div class="sl">Total Distance</div></div><div class="sc"><div class="si">⭐</div><div class="sv">—</div><div class="sl">Safety Score</div></div></div><div class="pg-e"><div class="ic">📈</div><div class="ti">Insight Builder</div><div class="ds">Build custom reports from fleet data.</div></div>`}
 
-// ═══════════════ SETTINGS PAGES ═══════════════
+// ═══════════════ SETTINGS CRUD PAGES ═══════════════
 
-// ─── COMPANY CONFIGURATION (like your Company Master form) ───
-async function rCompany(el){
-  const t=await apiG('/api/v1/settings/tenant');const ts=t||{};
-  el.innerHTML=`<div class="set-card"><h3>🏢 Company Information</h3>
-  <div class="form-row">
-    ${formInput('Company Name *',ts.name||'','text',true)}
-    ${formInput('Subdomain',ts.subdomain||'','text')}
-  </div><div class="form-row">
-    ${formSelect('Country *',[{v:'IN',l:'India'},{v:'US',l:'United States'},{v:'SA',l:'Saudi Arabia'},{v:'AE',l:'UAE'},{v:'GB',l:'United Kingdom'}],true)}
-    ${formInput('Pin Code','400001')}
-  </div><div class="form-row">
-    ${formSelect('Timezone *',[{v:'Asia/Kolkata',l:'Asia/Kolkata (IST)'},{v:'America/New_York',l:'America/New_York (EST)'},{v:'Asia/Riyadh',l:'Asia/Riyadh (AST)'},{v:'UTC',l:'UTC'}],true)}
-    ${formSelect('Currency *',[{v:'INR',l:'INR - Indian Rupee'},{v:'USD',l:'USD - US Dollar'},{v:'SAR',l:'SAR - Saudi Riyal'},{v:'EUR',l:'EUR - Euro'}],true)}
-  </div><div class="form-row">
-    ${formSelect('Plan *',[{v:'basic',l:'Basic'},{v:'pro',l:'Professional'},{v:'enterprise',l:'Enterprise'}],true)}
-    ${formSelect('Status *',[{v:'active',l:'Active'},{v:'inactive',l:'Inactive'}],true)}
-  </div></div>
+// ─── COMPANY CONFIGURATION (Live API) ───
+async function rCompany(el){const t=await apiG('/api/v1/settings/tenant');const ts=t||{};el.innerHTML=`<div class="set-card"><h3>🏢 Company Information</h3><div class="form-row">${fi('Company Name *',ts.name||'','text',true)}${fi('Subdomain',ts.subdomain||'','text')}</div><div class="form-row">${fs('Country *',[{v:'IN',l:'India'},{v:'US',l:'United States'},{v:'SA',l:'Saudi Arabia'},{v:'AE',l:'UAE'},{v:'GB',l:'United Kingdom'}],true)}${fi('Pin Code','400001')}</div><div class="form-row">${fs('Timezone *',[{v:'Asia/Kolkata',l:'Asia/Kolkata (IST)'},{v:'America/New_York',l:'America/New_York (EST)'},{v:'Asia/Riyadh',l:'Asia/Riyadh (AST)'},{v:'UTC',l:'UTC'}],true)}${fs('Currency *',[{v:'INR',l:'INR'},{v:'USD',l:'USD'},{v:'SAR',l:'SAR'},{v:'EUR',l:'EUR'}],true)}</div><div class="form-row">${fs('Plan *',[{v:'basic',l:'Basic'},{v:'pro',l:'Professional'},{v:'enterprise',l:'Enterprise'}],true)}${fs('Status *',[{v:'active',l:'Active'},{v:'inactive',l:'Inactive'}],true)}</div></div><div class="set-card"><h3>📍 Address</h3><div class="form-row">${fi('Address *','Company address','text',true)}${fi('City *','Mumbai','text',true)}</div><div class="form-row">${fi('State *','Maharashtra','text',true)}${fi('Country Code',ts.countryCode||'IN')}</div></div><div class="set-card"><h3>📞 Contact</h3><div class="form-row">${fi('Contact Person','Rajesh Kumar')}${fi('Contact No. *','+91-9876543210','tel',true)}</div><div class="form-row">${fi('Email ID *','admin@acme-logistics.com','email',true)}${fi('Mobile No.','+91-9876543211','tel')}</div></div><div class="set-card"><h3>📝 Legal & Tax</h3><div class="form-row">${fi('GST No.','27AABCU9603R1ZM')}${fi('PAN No.','AABCU9603R')}</div><div class="form-row">${fi('CIN No.','U72200MH2006PTC160739')}${fi('Tax Registration','')}</div></div><div class="set-card"><h3>🎨 Branding</h3><div class="form-row">${fi('Primary Color','#2563eb','color')}${fi('Secondary Color','#3b82f6','color')}</div></div><div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-o btn-s">Cancel</button><button class="btn btn-p btn-s" onclick="saveTenant()">Submit</button></div>`}
+async function saveTenant(){const i=$('ct').querySelectorAll('input'),s=$('ct').querySelectorAll('select');const body={name:i[0].value,timezone:s[2].value,currency:s[3].value};const r=await apiPut('/api/v1/settings/tenant',body);if(r.ok)alert('Company settings saved!');else alert('Failed to save')}
 
-  <div class="set-card"><h3>📍 Address Details</h3>
-  <div class="form-row">${formInput('Address *','Company address','text',true)}${formInput('City *','Mumbai','text',true)}</div>
-  <div class="form-row">${formInput('State *','Maharashtra','text',true)}${formInput('Country Code',ts.countryCode||'IN')}</div>
-  </div>
+// ─── USER MANAGEMENT (Live API — Full CRUD) ───
+async function rUsers(el){el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">👤 User Management</div><button class="btn btn-p btn-s" onclick="showUserForm()">+ Add User</button></div><div class="tb-bar"><input type="text" placeholder="Search users..." oninput="loadUsers(this.value)"></div><div id="uTbl"><span class="sp"></span></div>`;await loadUsers()}
+async function loadUsers(search=''){const d=await apiG('/api/v1/users?pageSize=50'+(search?'&search='+encodeURIComponent(search):''));const us=d?.items||[];$('uTbl').innerHTML=tbl(['User','Email','Role','Status','MFA','Last Login','Actions'],us.map(u=>{const nm=`${u.firstName||''} ${u.lastName||''}`.trim()||'—';return`<td style="font-weight:600"><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${(u.firstName||u.email||'?')[0].toUpperCase()}</div>${nm}</div></td><td>${u.email}</td><td><span class="sb2 ok">${u.roleName||'No Role'}</span></td><td>${badge(u.isActive?'active':'inactive')}</td><td>${u.mfaEnabled?'✅':'—'}</td><td>${u.lastLogin?new Date(u.lastLogin).toLocaleDateString():'Never'}</td><td><button class="btn btn-o btn-s" onclick="showUserForm('${u.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)" onclick="delUser('${u.id}','${u.email}')">Del</button></td>`}),{empty:'No users found. Click "+ Add User" to create one.'})}
+function showUserForm(id){openM(`<div class="modal-hd"><h2>👤 ${id?'Edit':'Add'} User</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('First Name *','John','text',true)}${fi('Last Name *','Smith','text',true)}</div><div class="form-row">${fi('Email ID *','user@company.com','email',true)}${fi(id?'New Password (blank = keep)':'Password *','',id?'password':'password',!id)}</div><div class="form-row">${fs('Role *',[{v:'admin',l:'Super Admin'},{v:'dispatcher',l:'Dispatcher'},{v:'viewer',l:'Viewer'}],true)}${fs('Gender *',[{v:'Male',l:'Male'},{v:'Female',l:'Female'},{v:'Other',l:'Other'}],true)}</div><div class="form-row">${fi('Phone No.','+91-9876543210','tel')}${fi('Date of Birth','2000-01-01','date')}</div><div class="form-row">${fi('Address','Mumbai, India')}${fs('Status *',[{v:'active',l:'Active'},{v:'inactive',l:'Inactive'}],true)}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveUser('${id||''}')">Submit</button></div>`)}
+async function saveUser(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelectorAll('select');const body={firstName:i[0].value,lastName:i[1].value,email:i[2].value,roleId:null};if(!id||i[3].value)body.password=i[3].value;const r=id?await apiPut('/api/v1/users/'+id,body):await apiP('/api/v1/users',body);if(r.ok){closeM();loadUsers()}else alert(r.data.title||'Failed')}
+async function delUser(id,email){if(!confirm('Delete user '+email+'?'))return;await apiDel('/api/v1/users/'+id);loadUsers()}
 
-  <div class="set-card"><h3>📞 Contact Information</h3>
-  <div class="form-row">${formInput('Contact Person','Rajesh Kumar')}${formInput('Contact No. *','+91-9876543210','tel',true)}</div>
-  <div class="form-row">${formInput('Email ID *','admin@acme-logistics.com','email',true)}${formInput('Alternate Email','')}</div>
-  <div class="form-row">${formInput('Company Phone','+91-22-12345678','tel')}${formInput('Mobile No.','+91-9876543211','tel')}</div>
-  </div>
+// ─── CLIENT MANAGEMENT (Live API — Full CRUD) ───
+async function rClients(el){el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">🤝 Client Management</div><button class="btn btn-p btn-s" onclick="showClientForm()">+ Add Client</button></div><div class="tb-bar"><input type="text" placeholder="Search clients..." oninput="loadClients(this.value)"></div><div id="clTbl"><span class="sp"></span></div>`;await loadClients()}
+async function loadClients(search=''){const d=await apiG('/api/v1/clients?pageSize=50'+(search?'&search='+encodeURIComponent(search):''));const cs=d?.items||[];$('clTbl').innerHTML=tbl(['Client Code','Client Name','Contact Person','Mobile','Email','Status','Actions'],cs.map(c=>`<td style="font-weight:600">${c.clientCode}</td><td>${c.clientName}</td><td>${c.contactPerson||'—'}</td><td>${c.mobileNo||'—'}</td><td>${c.emailId||'—'}</td><td>${badge(c.isActive?'active':'inactive')}</td><td><button class="btn btn-o btn-s" onclick="showClientForm('${c.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)" onclick="delClient('${c.id}','${c.clientName}')">Del</button></td>`),{empty:'No clients found. Click "+ Add Client" to create one.'})}
+function showClientForm(id){openM(`<div class="modal-hd"><h2>🤝 ${id?'Edit':'Add'} Client Master</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('Client Name *','Reliance Industries','text',true)}${fi('Client Code *','REL-001','text',true)}</div><div class="form-row">${fi('Company Name','Reliance Industries Ltd')}${fs('Parent Client',[{v:'',l:'--Select Parent Client--'}])}</div><div class="form-row">${fi('Address *','Maker Chambers IV, Nariman Point','text',true)}${fi('Pin Code','400001')}</div><div class="form-row">${fs('Country *',[{v:'IN',l:'India'},{v:'US',l:'United States'},{v:'SA',l:'Saudi Arabia'}],true)}${fs('State *',[{v:'MH',l:'Maharashtra'},{v:'KA',l:'Karnataka'},{v:'DL',l:'Delhi'}],true)}</div><div class="form-row">${fs('City *',[{v:'MUM',l:'Mumbai'},{v:'BLR',l:'Bangalore'},{v:'DEL',l:'Delhi'}],true)}${fi('Latitude','19.076')}</div><div class="form-row">${fi('Longitude','72.877')}${fi('Contact Person *','Amit Patel','text',true)}</div><div class="form-row">${fi('Contact No. *','+91-22-22785000','tel',true)}${fi('Mobile No. *','+91-9820012345','tel',true)}</div><div class="form-row">${fi('Email ID *','amit@ril.com','email',true)}${fi('Alternate Email','')}</div><div class="form-row">${fi('Company Phone','+91-22-22785000','tel')}${fi('Alt Contact No.','')}</div><div class="form-row">${fi('PAN No.','AABCR1234M')}${fi('GST No.','27AABCR1234M1Z5')}</div><div class="form-row">${fi('CIN No.','')}${fs('Consignee Category',[{v:'REGULAR',l:'Regular'},{v:'VIP',l:'VIP'},{v:'GOVT',l:'Government'}])}</div><div class="form-row"><div class="fg"><label>Is Contract Signed</label><label class="toggle"><input type="checkbox"><span class="sl"></span></label></div><div class="fg"><label>Active</label><label class="toggle"><input type="checkbox" checked><span class="sl"></span></label></div></div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveClient('${id||''}')">Submit</button></div>`)}
+async function saveClient(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelectorAll('select');const body={clientName:i[0].value,clientCode:i[1].value,companyName:i[2].value,address:i[4].value,pinCode:i[5].value,countryId:null,stateId:null,cityId:null,latitude:parseFloat(i[7].value)||null,longitude:parseFloat(i[8].value)||null,contactPerson:i[9].value,contactNo:i[10].value,mobileNo:i[11].value,emailId:i[12].value,panNo:i[15].value,gstNo:i[16].value,cinNo:i[17].value};const r=id?await apiPut('/api/v1/clients/'+id,body):await apiP('/api/v1/clients',body);if(r.ok){closeM();loadClients()}else alert(r.data.title||'Failed')}
+async function delClient(id,name){if(!confirm('Delete client '+name+'?'))return;await apiDel('/api/v1/clients/'+id);loadClients()}
 
-  <div class="set-card"><h3>📝 Legal & Tax</h3>
-  <div class="form-row">${formInput('GST No.','27AABCU9603R1ZM')}${formInput('PAN No.','AABCU9603R')}</div>
-  <div class="form-row">${formInput('CIN No.','U72200MH2006PTC160739')}${formInput('Tax Registration','')}</div>
-  </div>
-
-  <div class="set-card"><h3>🎨 Branding</h3>
-  <div class="form-row">
-    ${formInput('Primary Color','#2563eb','color')}
-    ${formInput('Secondary Color','#3b82f6','color')}
-  </div><div class="form-row">
-    ${formInput('Logo URL','/assets/logo.svg')}
-    <div class="fg"><label>Active</label><label class="toggle"><input type="checkbox" checked><span class="sl"></span></label></div>
-  </div></div>
-
-  <div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-o btn-s">Cancel</button><button class="btn btn-p btn-s" onclick="saveTenant()">Submit</button></div>`;
-}
-async function saveTenant(){const inputs=$('ct').querySelectorAll('input');const body={name:inputs[0].value,timezone:$('ct').querySelectorAll('select')[2].value,currency:$('ct').querySelectorAll('select')[3].value};const r=await apiPut('/api/v1/settings/tenant',body);if(r.ok)alert('Company settings saved!');else alert('Failed to save')}
-
-// ─── USER MANAGEMENT (like your User Master form) ───
-async function rUsers(el){
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">👤 User Management</div><button class="btn btn-p btn-s" onclick="showUserForm()">+ Add User</button></div>
-  <div class="tb-bar"><input type="text" placeholder="Search users..." id="uSearch" oninput="loadUsers()"><select id="uStatus" onchange="loadUsers()"><option value="">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-  <div id="uTbl"><span class="sp"></span></div>`;await loadUsers()}
-async function loadUsers(){const d=await apiG('/api/v1/users?pageSize=50');allUsers=d?.items||[];$('uTbl').innerHTML=tbl(['User','Email','Role','Status','MFA','Last Login','Actions'],allUsers.map(u=>{const nm=`${u.firstName||''} ${u.lastName||''}`.trim()||'—';return`<td style="font-weight:600"><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${(u.firstName||u.email||'?')[0].toUpperCase()}</div>${nm}</div></td><td>${u.email}</td><td><span class="sb2 ok">${u.roleName||'No Role'}</span></td><td>${badge(u.isActive?'active':'inactive')}</td><td>${u.mfaEnabled?'✅':'—'}</td><td>${u.lastLogin?new Date(u.lastLogin).toLocaleDateString():'Never'}</td><td><button class="btn btn-o btn-s" onclick="showUserForm('${u.id}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er);border-color:rgba(239,68,68,.3)" onclick="delUser('${u.id}','${u.email}')">Del</button></td>`}),{empty:'No users found. Click "+ Add User" to create one.'})}
-function showUserForm(id){
-  openM(`<div class="modal-hd"><h2>👤 ${id?'Edit':'Add'} User</h2><button class="close" onclick="closeM()">&times;</button></div>
-  <div class="modal-bd"><div class="form-row">
-    ${formInput('First Name *','John','text',true)}
-    ${formInput('Last Name *','Smith','text',true)}
-  </div><div class="form-row">
-    ${formInput('Email ID *','user@company.com','email',true)}
-    ${formInput(id?'New Password (blank = keep)':'Password *','',id?'password':'password',!id)}
-  </div><div class="form-row">
-    ${formSelect('Role *',['Super Admin','Admin','Dispatcher','Viewer'],true)}
-    ${formSelect('Gender',['Male','Female','Other'])}
-  </div><div class="form-row">
-    ${formInput('Phone No.','+91-9876543210','tel')}
-    ${formInput('Date of Birth','')}
-  </div><div class="form-row">
-    ${formInput('Address','')}
-    <div class="fg"><label>Active</label><label class="toggle"><input type="checkbox" checked id="uActive"><span class="sl"></span></label></div>
-  </div></div>
-  <div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveUser('${id||''}')">Submit</button></div>`);
-}
-async function saveUser(id){const inputs=$('mC').querySelectorAll('input');const sels=$('mC').querySelectorAll('select');const body={firstName:inputs[0].value,lastName:inputs[1].value,email:inputs[2].value,roleName:sels[0].value,phone:inputs[5].value,address:inputs[7].value};if(!id)body.password=inputs[3].value;if(id&&inputs[3].value)body.password=inputs[3].value;const r=await apiP(id?'/api/v1/users/'+id:'/api/v1/users',body);if(r.ok){closeM();loadUsers()}else alert(r.data.title||'Failed')}
-async function delUser(id,email){if(!confirm(`Delete user ${email}?`))return;await apiDel('/api/v1/users/'+id);loadUsers()}
-
-// ─── ROLE & PERMISSIONS (like Form Role Mapping) ───
-async function rRoles(el){
-  const menus=['Command Center','Fleet Intelligence','Trip Planning','Geofence Management','Safety Dashboard','Video Telematics','Device Management','Analytics Dashboard','User Management','System Settings'];
-  el.innerHTML=`<div class="set-card"><h3>🔐 Role & Permission Management</h3>
-  <div class="form-row">
-    ${formSelect('Company',[U.tenantName])}
-    ${formSelect('Role *',[{v:'admin',l:'Super Admin'},{v:'dispatcher',l:'Dispatcher'},{v:'viewer',l:'Viewer'},{v:'driver',l:'Driver'}],true)}
-  </div>
-  <div style="margin-top:16px;overflow-x:auto">
-  <table class="perm-tbl">
-    <thead><tr><th style="text-align:left;padding-left:20px">Menu</th><th style="width:60px">All</th><th style="width:60px">View</th><th style="width:60px">Add</th><th style="width:60px">Edit</th><th style="width:60px">Delete</th></tr></thead>
-    <tbody>${menus.map(m=>`<tr><td style="padding-left:20px">${m}</td><td><input type="checkbox" checked onchange="toggleAll(this)"></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>`).join('')}</tbody>
-  </table></div>
-  <div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-o btn-s">Cancel</button><button class="btn btn-p btn-s" onclick="alert('Permissions saved!')">Submit</button></div></div>`;
-}
+// ─── ROLE & PERMISSIONS (Live API — Permission Matrix) ───
+async function rRoles(el){const roles=await apiG('/api/v1/users/roles');const rs=roles||[];const forms=await apiG('/api/v1/forms');const fs2=forms||[];el.innerHTML=`<div class="set-card"><h3>🔐 Role & Permission Management (Form Role Mapping)</h3><div class="form-row">${fs('Company *',[{v:U.tenantName,l:U.tenantName}],true)}${fs('Role *',rs.map(r=>({v:r.id,l:r.name})),true)}</div><div style="margin-top:16px;overflow-x:auto"><table class="perm-tbl"><thead><tr><th style="text-align:left;padding-left:20px">Menu</th><th>All</th><th>View</th><th>Add</th><th>Edit</th><th>Delete</th></tr></thead><tbody>${fs2.map(f=>`<tr><td>${f.formName}</td><td><input type="checkbox" checked onchange="toggleAll(this)"></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>`).join('')}</tbody></table></div><div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-o btn-s">Cancel</button><button class="btn btn-p btn-s" onclick="alert('Permissions saved!')">Submit</button></div></div>`}
 function toggleAll(el){const row=el.closest('tr');row.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=el.checked)}
 
-// ─── FEATURE MANAGEMENT ───
-async function rFeatures(el){
-  el.innerHTML=`<div class="set-card"><h3>🎛️ Feature Management</h3><div id="featList"><span class="sp"></span></div>
-  <div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-p btn-s" onclick="alert('Features saved!')">Save Changes</button></div></div>`;
-  const f=await apiG('/api/v1/settings/features');allFeatures=f||[];
-  const modules=[...new Set(allFeatures.map(f=>f.module))];
-  let h='';modules.forEach(m=>{
-    h+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600;margin-bottom:8px;text-transform:capitalize;padding-bottom:4px;border-bottom:1px solid var(--bl)">${m.replace(/-/g,' ')}</div>`;
-    allFeatures.filter(f=>f.module===m).forEach(f=>{
-      h+=`<div class="set-row"><div><div class="label">${f.featureName.replace(/-/g,' ')}</div></div><label class="toggle"><input type="checkbox" ${f.enabled?'checked':''} onchange="toggleFeat('${f.id}',this.checked)"><span class="sl"></span></label></div>`;
-    });h+=`</div>`;
-  });
-  $('featList').innerHTML=h;
-}
+// ─── LOOKUP MANAGEMENT (Live API — Full CRUD) ───
+async function rLookups(el){const cats=await apiG('/api/v1/lookups/categories');const cs=cats||[];el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📋 Lookup Management</div><button class="btn btn-p btn-s" onclick="showLookupForm()">+ Add Lookup</button></div><div class="tb-bar"><select id="lkCat" onchange="loadLookups()"><option value="">All Categories</option>${cs.map(c=>`<option value="${c}">${c}</option>`).join('')}</select><input type="text" placeholder="Search..." id="lkSearch" oninput="loadLookups()"></div><div id="lkTbl"><span class="sp"></span></div>`;await loadLookups()}
+async function loadLookups(){const cat=$('lkCat')?.value||'';const search=$('lkSearch')?.value||'';let url='/api/v1/lookups?activeOnly=false';if(cat)url+='&category='+encodeURIComponent(cat);if(search)url+='&search='+encodeURIComponent(search);const d=await apiG(url);const ls=d||[];$('lkTbl').innerHTML=tbl(['Category','Code','Label','Sort','Active','Actions'],ls.map(l=>`<td><span class="sb2 ok">${l.category}</span></td><td style="font-weight:600">${l.code}</td><td>${l.label}</td><td>${l.sortOrder}</td><td>${badge(l.isActive?'active':'inactive')}</td><td><button class="btn btn-o btn-s" onclick="showLookupForm('${l.id}','${l.category}','${l.code}','${l.label}',${l.sortOrder})">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)" onclick="delLookup('${l.id}','${l.label}')">Del</button></td>`),{empty:'No lookups found'})}
+function showLookupForm(id,cat,code,label,sort){openM(`<div class="modal-hd"><h2>📋 ${id?'Edit':'Add'} Lookup</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fs('Category *',[{v:'Country',l:'Country'},{v:'State',l:'State'},{v:'City',l:'City'},{v:'VehicleType',l:'Vehicle Type'},{v:'FuelType',l:'Fuel Type'},{v:'RouteType',l:'Route Type'},{v:'LocationType',l:'Location Type'},{v:'GeofenceColor',l:'Geofence Color'},{v:'SubscriptionPackage',l:'Subscription Package'},{v:'PaymentMode',l:'Payment Mode'},{v:'DeviceProtocol',l:'Device Protocol'},{v:'IncidentSeverity',l:'Incident Severity'},{v:'IncidentStatus',l:'Incident Status'},{v:'DeliveryStatus',l:'Delivery Status'},{v:'ConsigneeCategory',l:'Consignee Category'}],true)}${fi('Code *',code||'','text',true)}</div><div class="form-row">${fi('Label *',label||'','text',true)}${fi('Sort Order',sort||0,'number')}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveLookup('${id||''}')">Submit</button></div>`)}
+async function saveLookup(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelector('select');const body={category:s[0].value,code:i[0].value,label:i[1].value,sortOrder:parseInt(i[2].value)||0};const r=id?await apiPut('/api/v1/lookups/'+id,body):await apiP('/api/v1/lookups',body);if(r.ok){closeM();loadLookups()}else alert(r.data.title||'Failed')}
+async function delLookup(id,name){if(!confirm('Delete lookup "'+name+'"?'))return;await apiDel('/api/v1/lookups/'+id);loadLookups()}
+
+// ─── FORM REGISTRY (Live API — Full CRUD) ───
+async function rForms(el){el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">📄 Form Registry</div><button class="btn btn-p btn-s" onclick="showFormRegForm()">+ Add Form</button></div><div id="fmTbl"><span class="sp"></span></div>`;const d=await apiG('/api/v1/forms');const fs2=d||[];$('fmTbl').innerHTML=tbl(['Form Name','Controller','Action','Platform','Active','Actions'],fs2.map(f=>`<td style="font-weight:600">${f.formName}</td><td>${f.controllerName}</td><td>${f.actionName}</td><td><span class="sb2 ok">${f.platform}</span></td><td>${badge(f.isActive?'active':'inactive')}</td><td><button class="btn btn-o btn-s" onclick="showFormRegForm('${f.id}','${f.formName}','${f.controllerName}','${f.actionName}','${f.className||''}','${f.areaName||''}','${f.platform}')">Edit</button> <button class="btn btn-o btn-s" style="color:var(--er)" onclick="delForm('${f.id}','${f.formName}')">Del</button></td>`),{empty:'No forms registered'})}
+function showFormRegForm(id,fn,cn,an,cls,an2,pl){openM(`<div class="modal-hd"><h2>📄 ${id?'Edit':'Add'} Form</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fi('Form Name *',fn||'','text',true)}${fi('Controller Name *',cn||'','text',true)}</div><div class="form-row">${fi('Action Name *',an||'','text',true)}${fi('Class Name',cls||'')}</div><div class="form-row">${fi('Area Name',an2||'')}${fs('Platform *',[{v:'Web',l:'Web'},{v:'Mobile',l:'Mobile'},{v:'Both',l:'Both'}],true)}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveFormReg('${id||''}')">Submit</button></div>`)}
+async function saveFormReg(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelector('select');const body={formName:i[0].value,controllerName:i[1].value,actionName:i[2].value,className:i[3].value||null,areaName:i[4].value||null,platform:s[0].value};const r=id?await apiPut('/api/v1/forms/'+id,body):await apiP('/api/v1/forms',body);if(r.ok){closeM();rForms($('ct'))}else alert(r.data.title||'Failed')}
+async function delForm(id,name){if(!confirm('Delete form "'+name+'"?'))return;await apiDel('/api/v1/forms/'+id);rForms($('ct'))}
+
+// ─── FEATURE MANAGEMENT (Live API) ───
+async function rFeatures(el){el.innerHTML=`<div class="set-card"><h3>🎛️ Feature Management</h3><div id="featList"><span class="sp"></span></div><div style="display:flex;gap:8px;justify-content:flex-end;padding:16px 0"><button class="btn btn-p btn-s" onclick="alert('Features saved!')">Save Changes</button></div></div>`;const f=await apiG('/api/v1/settings/features');const fs2=f||[];const modules=[...new Set(fs2.map(f=>f.module))];let h='';modules.forEach(m=>{h+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600;margin-bottom:8px;text-transform:capitalize;padding-bottom:4px;border-bottom:1px solid var(--bl)">${m.replace(/-/g,' ')}</div>`;fs2.filter(f=>f.module===m).forEach(f=>{h+=`<div class="set-row"><div><div class="label">${f.featureName.replace(/-/g,' ')}</div></div><label class="toggle"><input type="checkbox" ${f.enabled?'checked':''} onchange="toggleFeat('${f.id}',this.checked)"><span class="sl"></span></label></div>`});h+='</div>'});$('featList').innerHTML=h}
 async function toggleFeat(id,en){await apiPut('/api/v1/settings/features/'+id,{enabled:en})}
 
-// ─── SUBSCRIPTION ───
-async function rSubscription(el){
-  el.innerHTML=`<div class="set-card"><h3>💳 Subscription Management</h3>
-  <div class="form-row">
-    ${formSelect('Company *',[U.tenantName],true)}
-    ${formSelect('Package *',[{v:'basic',l:'Basic - 10 vehicles'},{v:'pro',l:'Professional - 50 vehicles'},{v:'enterprise',l:'Enterprise - Unlimited'}],true)}
-  </div><div class="form-row">
-    ${formInput('Subscription From *','','date',true)}
-    ${formInput('Subscription To *','','date',true)}
-  </div><div class="form-row">
-    ${formInput('Invoice No. *','','text',true)}
-    ${formInput('Invoice Date *','','date',true)}
-  </div><div class="form-row">
-    ${formSelect('Payment Mode *',['Online','Cheque','Cash','NEFT','UPI'],true)}
-    ${formInput('Remark','')}
-  </div></div>
-  <div class="set-card"><h3>📋 Subscription History</h3>
-  <div id="subTbl"></div></div>`;
-  $('subTbl').innerHTML=tbl(['Package','From','To','Invoice','Payment','Status'],[
-    `<td><span class="sb2 ok">Professional</span></td><td>2026-01-01</td><td>2026-12-31</td><td>INV-2026-001</td><td>Online</td><td>${badge('active')}</td>`,
-    `<td><span class="sb2 wn">Basic</span></td><td>2025-01-01</td><td>2025-12-31</td><td>INV-2025-001</td><td>Cheque</td><td>${badge('maintenance')}</td>`,
-  ]);
-}
+// ─── SUBSCRIPTION (Live API) ───
+async function rSubscription(el){const subs=await apiG('/api/v1/subscriptions');const ss=subs||[];el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="st" style="margin:0">💳 Subscription Management</div><button class="btn btn-p btn-s" onclick="showSubForm()">+ Add Subscription</button></div><div id="subTbl"><span class="sp"></span></div>`;$('subTbl').innerHTML=tbl(['Package','From','To','Invoice No.','Invoice Date','Status','Actions'],ss.map(s=>`<td><span class="sb2 ok">${s.packageName}</span></td><td>${s.subscriptionFrom}</td><td>${s.subscriptionTo}</td><td>${s.invoiceNo}</td><td>${s.invoiceDate}</td><td>${badge(s.isActive?'active':'inactive')}</td><td><button class="btn btn-o btn-s" onclick="showSubForm('${s.id}')">Edit</button></td>`),{empty:'No subscriptions found'})}
+function showSubForm(id){openM(`<div class="modal-hd"><h2>💳 ${id?'Edit':'Add'} Subscription</h2><button class="close" onclick="closeM()">&times;</button></div><div class="modal-bd"><div class="form-row">${fs('Package Name *',[{v:'Basic',l:'Basic'},{v:'Professional',l:'Professional'},{v:'Enterprise',l:'Enterprise'},{v:'Custom',l:'Custom'}],true)}${fi('Invoice No. *','INV-2026-001','text',true)}</div><div class="form-row">${fi('Subscription From *','','date',true)}${fi('Subscription To *','','date',true)}</div><div class="form-row">${fi('Invoice Date *','','date',true)}${fs('Payment Mode *',[{v:'Bank Transfer',l:'Bank Transfer'},{v:'Credit/Debit Card',l:'Card'},{v:'Cash',l:'Cash'},{v:'Cheque',l:'Cheque'},{v:'UPI',l:'UPI'}],true)}</div><div class="form-row">${fa('Remark','')}</div></div><div class="modal-ft"><button class="btn btn-o btn-s" onclick="closeM()">Cancel</button><button class="btn btn-p btn-s" onclick="saveSub('${id||''}')">Submit</button></div>`)}
+async function saveSub(id){const i=$('mC').querySelectorAll('input'),s=$('mC').querySelectorAll('select'),t=$('mC').querySelector('textarea');const body={packageName:s[0].value,invoiceNo:i[1].value,subscriptionFrom:i[2].value,subscriptionTo:i[3].value,invoiceDate:i[4].value,paymentModeId:null,remark:t?.value||''};const r=id?await apiPut('/api/v1/subscriptions/'+id,body):await apiP('/api/v1/subscriptions',body);if(r.ok){closeM();rSubscription($('ct'))}else alert(r.data.title||'Failed')}
+
+// ─── NOTIFICATIONS (Live API) ───
+async function rNotifications(el){el.innerHTML=`<div class="set-card"><h3>🔔 Notification Center</h3><div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-o btn-s" onclick="markAllRead()">Mark All Read</button></div><div id="notTbl"><span class="sp"></span></div></div>`;const d=await apiG('/api/v1/notifications');const ns=d?.items||[];$('notTbl').innerHTML=tbl(['Type','Title','Message','Date','Status'],ns.map(n=>`<td>${badge(n.type)}</td><td style="font-weight:600">${n.title}</td><td>${n.message}</td><td>${new Date(n.createdAt).toLocaleDateString()}</td><td>${n.isRead?'<span class="sb2 ok">Read</span>':'<span class="sb2 wn">Unread</span>'}</td>`),{empty:'No notifications'})}
+async function markAllRead(){await apiP('/api/v1/notifications/read-all',{});rNotifications($('ct'))}
+
+// ─── AUDIT TRAIL (Live API) ───
+async function rAudit(el){el.innerHTML=`<div class="set-card"><h3>📝 Audit Trail</h3><div class="tb-bar"><select id="aEntity" onchange="loadAudit()"><option value="">All Entities</option><option value="User">User</option><option value="Vehicle">Vehicle</option><option value="Driver">Driver</option><option value="Device">Device</option><option value="Client">Client</option><option value="Route">Route</option><option value="Geofence">Geofence</option><option value="Lookup">Lookup</option><option value="FormMaster">Form</option><option value="Subscription">Subscription</option></select><select id="aAction" onchange="loadAudit()"><option value="">All Actions</option><option value="Create">Create</option><option value="Update">Update</option><option value="Delete">Delete</option></select></div><div id="auTbl"><span class="sp"></span></div></div>`;await loadAudit()}
+async function loadAudit(){const entity=$('aEntity')?.value||'';const action=$('aAction')?.value||'';let url='/api/v1/audit?pageSize=50';if(entity)url+='&entityType='+encodeURIComponent(entity);if(action)url+='&action='+encodeURIComponent(action);const d=await apiG(url);const as=d?.items||[];$('auTbl').innerHTML=tbl(['Date','Action','Entity','Entity ID','User','IP'],as.map(a=>`<td>${new Date(a.createdAt).toLocaleString()}</td><td><span class="sb2 ${a.action==='Create'?'ok':a.action==='Delete'?'er':'wn'}">${a.action}</span></td><td>${a.entityType}</td><td style="font-family:monospace;font-size:10px">${a.entityId?.substring(0,8)||'—'}</td><td>${a.userId?.substring(0,8)||'System'}</td><td>${a.ipAddress||'—'}</td>`),{empty:'No audit entries found'})}
 
 function rPlaceholder(el){const mod=Object.values(NAV).flatMap(m=>m.p).find(p=>p.id===pg);el.innerHTML=`<div class="pg-e"><div class="ic">${mod?.i||'🚧'}</div><div class="ti">${mod?.l||pg}</div><div class="ds">This module is coming soon.</div></div>`}
 
