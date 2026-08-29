@@ -254,8 +254,30 @@ DO $$ BEGIN
 END $$;
 ";
         await cmd.ExecuteNonQueryAsync();
+        
+        // Widen existing columns that EF Core created too narrow
+        cmd.CommandText = @"
+ALTER TABLE tenants ALTER COLUMN country_code TYPE VARCHAR(10);
+ALTER TABLE tenants ALTER COLUMN timezone TYPE VARCHAR(50);
+ALTER TABLE tenants ALTER COLUMN currency TYPE VARCHAR(10);
+ALTER TABLE tenants ALTER COLUMN plan TYPE VARCHAR(20);
+ALTER TABLE tenants ALTER COLUMN status TYPE VARCHAR(20);
+ALTER TABLE tenants ALTER COLUMN data_residency_region TYPE VARCHAR(50);
+ALTER TABLE vehicles ALTER COLUMN type TYPE VARCHAR(50);
+ALTER TABLE vehicles ALTER COLUMN model TYPE VARCHAR(100);
+ALTER TABLE vehicles ALTER COLUMN fuel_type TYPE VARCHAR(30);
+ALTER TABLE vehicles ALTER COLUMN status TYPE VARCHAR(30);
+ALTER TABLE drivers ALTER COLUMN status TYPE VARCHAR(30);
+ALTER TABLE devices ALTER COLUMN model TYPE VARCHAR(100);
+ALTER TABLE devices ALTER COLUMN status TYPE VARCHAR(30);
+ALTER TABLE device_vendors ALTER COLUMN protocol TYPE VARCHAR(20);
+ALTER TABLE device_commands ALTER COLUMN command_type TYPE VARCHAR(50);
+ALTER TABLE device_commands ALTER COLUMN status TYPE VARCHAR(30);
+ALTER TABLE users ALTER COLUMN email TYPE VARCHAR(200);
+";
+        try { await cmd.ExecuteNonQueryAsync(); Console.WriteLine("✅ Columns widened"); } catch { /* columns already wide enough */ }
         await conn.CloseAsync();
-        Console.WriteLine("✅ New tables created (if missing)");
+        Console.WriteLine("✅ Database schema updated");
     }
 
     await SeedData.SeedAsync(app.Services);
