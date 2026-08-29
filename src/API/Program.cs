@@ -16,13 +16,56 @@ builder.Services.AddInfrastructure(builder.Configuration);
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 if (!string.IsNullOrEmpty(databaseUrl))
 {
+    Console.WriteLine($"[DB] DATABASE_URL found (length={databaseUrl.Length})");
+
     // Neon/Render provides postgres:// or postgresql:// URLs
-    // EF Core Npgsql needs the full connection string with sslmode
-    if (!databaseUrl.Contains("sslmode"))
+    // EF Core Npgsql needs Npgsql-format connection string
+
+    // Parse the URL and build a proper Npgsql connection string
+    try
     {
-        databaseUrl += databaseUrl.Contains("?") ? "&sslmode=require" : "?sslmode=require";
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':');
+        var user = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+
+        // Parse query params
+        var queryParams = new Dictionary<string, string>();
+        if (!string.IsNullOrEmpty(uri.Query))
+        {
+            foreach (var param in uri.Query.TrimStart('?').Split('&'))
+            {
+                var parts = param.Split('=');
+                if (parts.Length == 2)
+                    queryParams[parts[0]] = Uri.UnescapeDataString(parts[1]);
+            }
+        }
+
+        // Ensure sslmode is set
+        if (!queryParams.ContainsKey("sslmode"))
+            queryParams["sslmode"] = "require";
+
+        var connStr = $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode={queryParams["sslmode"]};Trust Server Certificate=true";
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
+        Console.WriteLine($"[DB] Parsed connection: Host={host}, Port={port}, Database={database}, User={user}");
     }
-    builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+    catch (Exception ex)
+    {
+        // Fallback: try to use the URL directly with basic fixes
+        Console.WriteLine($"[DB] URI parse failed: {ex.Message}, trying raw URL");
+        if (!databaseUrl.Contains("sslmode"))
+        {
+            databaseUrl += databaseUrl.Contains("?") ? "&sslmode=require" : "?sslmode=require";
+        }
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+    }
+}
+else
+{
+    Console.WriteLine("[DB] No DATABASE_URL found, using config");
 }
 
 // JWT Secret from env var
@@ -44,7 +87,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:4201",
                 "https://fms-web-uat.vercel.app",
                 "https://fms-admin-uat.vercel.app",
-                "https://fms-web-lakshyas-projects-c97e54f6.vercel.app")
+                "https://fms-web-lakshyas-projects-c97e54f6.vercel.app",
+                "https://fms-4wpzsv4ub-lakshyas-projects-c97e54f6.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
