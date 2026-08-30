@@ -171,12 +171,21 @@ public static class SeedData
         var adminRoleId3 = Guid.NewGuid();
         var driverRoleId = Guid.NewGuid();
 
+        var dispatcherRoleId1 = Guid.NewGuid();
+        var managerRoleId1 = Guid.NewGuid();
+        var viewerRoleId1 = Guid.NewGuid();
         context.Roles.AddRange(new List<Role>
         {
-            new() { Id = adminRoleId1, TenantId = tenant1Id, Name = "Super Admin", Permissions = new List<string> { "all" }, IsSystemRole = true },
-            new() { Id = adminRoleId2, TenantId = tenant2Id, Name = "Super Admin", Permissions = new List<string> { "all" }, IsSystemRole = true },
-            new() { Id = adminRoleId3, TenantId = tenant3Id, Name = "Super Admin", Permissions = new List<string> { "all" }, IsSystemRole = true },
-            new() { Id = driverRoleId, TenantId = tenant1Id, Name = "Driver", Permissions = new List<string> { "fleet-intelligence:read", "trip-logistics:read" }, IsSystemRole = true }
+            new() { Id = adminRoleId1, TenantId = tenant1Id, Name = "Super Admin", Description = "Full system access", Permissions = new List<string> { "all" }, IsSystemRole = true },
+            new() { Id = adminRoleId2, TenantId = tenant2Id, Name = "Super Admin", Description = "Full system access", Permissions = new List<string> { "all" }, IsSystemRole = true },
+            new() { Id = adminRoleId3, TenantId = tenant3Id, Name = "Super Admin", Description = "Full system access", Permissions = new List<string> { "all" }, IsSystemRole = true },
+            new() { Id = driverRoleId, TenantId = tenant1Id, Name = "Driver", Description = "View-only fleet and trip data", Permissions = new List<string> { "fleet-intelligence:read", "trip-logistics:read" }, IsSystemRole = true },
+            new() { Id = dispatcherRoleId1, TenantId = tenant1Id, Name = "Dispatcher", Description = "Manage routes, vehicles, and daily operations", Permissions = new List<string> { "command-center:read", "fleet-intelligence:read", "trip-logistics:read", "trip-logistics:write" }, IsSystemRole = false, CreatedAt = DateTime.UtcNow },
+            new() { Id = managerRoleId1, TenantId = tenant1Id, Name = "Manager", Description = "View all modules, manage drivers and clients", Permissions = new List<string> { "command-center:read", "fleet-intelligence:read", "trip-logistics:read", "safety-compliance:read", "analytics:read", "settings:read" }, IsSystemRole = false, CreatedAt = DateTime.UtcNow },
+            new() { Id = viewerRoleId1, TenantId = tenant1Id, Name = "Viewer", Description = "Read-only access to dashboards", Permissions = new List<string> { "command-center:read", "analytics:read" }, IsSystemRole = false, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Name = "Fleet Manager", Description = "Manage vehicles, drivers, and devices", Permissions = new List<string> { "fleet-intelligence:all", "trip-logistics:read" }, IsSystemRole = false, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Name = "Safety Officer", Description = "Manage incidents, compliance, and safety", Permissions = new List<string> { "safety-compliance:all", "command-center:read" }, IsSystemRole = false, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), TenantId = tenant1Id, Name = "Client Manager", Description = "Manage clients and their access", Permissions = new List<string> { "settings:clients", "command-center:read" }, IsSystemRole = false, CreatedAt = DateTime.UtcNow },
         });
 
         var userId1 = Guid.NewGuid();
@@ -303,6 +312,38 @@ public static class SeedData
                     CanView = true, CanAdd = true, CanEdit = true, CanDelete = true, CreatedAt = DateTime.UtcNow
                 });
             }
+        }
+        await context.SaveChangesAsync();
+
+        // ==========================================
+        // FORM ROLE MAPPING for Dispatcher, Manager, Viewer
+        // ==========================================
+        var dispatcherForms = formMasters.Where(f => new[] { "Operations Overview", "Live Fleet Map", "Vehicle Directory", "Driver Hub", "Route Management", "Geofence Management", "Active Deliveries", "Command Center" }.Contains(f.FormName)).ToList();
+        foreach (var form in dispatcherForms)
+        {
+            context.FormRoleMappings.Add(new FormRoleMapping
+            {
+                Id = Guid.NewGuid(), TenantId = tenant1Id, RoleId = dispatcherRoleId1, FormId = form.Id,
+                CanView = true, CanAdd = true, CanEdit = true, CanDelete = false, CreatedAt = DateTime.UtcNow
+            });
+        }
+        var managerForms = formMasters.Where(f => new[] { "Operations Overview", "Live Fleet Map", "Vehicle Directory", "Driver Hub", "Fuel Analytics", "Maintenance Studio", "Route Management", "Geofence Management", "Active Deliveries", "Incident Center", "Insight Builder", "Command Center", "Client Management", "Device Fleet" }.Contains(f.FormName)).ToList();
+        foreach (var form in managerForms)
+        {
+            context.FormRoleMappings.Add(new FormRoleMapping
+            {
+                Id = Guid.NewGuid(), TenantId = tenant1Id, RoleId = managerRoleId1, FormId = form.Id,
+                CanView = true, CanAdd = false, CanEdit = true, CanDelete = false, CreatedAt = DateTime.UtcNow
+            });
+        }
+        var viewerForms = formMasters.Where(f => new[] { "Operations Overview", "Live Fleet Map", "Vehicle Directory", "Insight Builder", "Command Center" }.Contains(f.FormName)).ToList();
+        foreach (var form in viewerForms)
+        {
+            context.FormRoleMappings.Add(new FormRoleMapping
+            {
+                Id = Guid.NewGuid(), TenantId = tenant1Id, RoleId = viewerRoleId1, FormId = form.Id,
+                CanView = true, CanAdd = false, CanEdit = false, CanDelete = false, CreatedAt = DateTime.UtcNow
+            });
         }
         await context.SaveChangesAsync();
 
