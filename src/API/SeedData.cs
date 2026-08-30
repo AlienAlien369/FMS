@@ -598,6 +598,79 @@ public static class SeedData
             Console.WriteLine("[Seed]   Subscriptions: 3 subscriptions");
         }
 
+        // Seed additional roles if only Super Admin exists for first tenant
+        if (tenantIds.Any())
+        {
+            var tid = tenantIds.First();
+            var existingRoleNames = await context.Roles.Where(r => r.TenantId == tid).Select(r => r.Name).ToListAsync();
+            var rolesToAdd = new List<Role>();
+            var rolePerms = new (string Name, string Desc, List<string> Perms, bool IsSystem)[]
+            {
+                ("Dispatcher", "Manage routes, vehicles, and daily operations", new List<string> { "command-center:read", "fleet-intelligence:read", "trip-logistics:read", "trip-logistics:write" }, false),
+                ("Manager", "View all modules, manage drivers and clients", new List<string> { "command-center:read", "fleet-intelligence:read", "trip-logistics:read", "safety-compliance:read", "analytics:read", "settings:read" }, false),
+                ("Viewer", "Read-only access to dashboards", new List<string> { "command-center:read", "analytics:read" }, false),
+                ("Fleet Manager", "Manage vehicles, drivers, and devices", new List<string> { "fleet-intelligence:all", "trip-logistics:read" }, false),
+                ("Safety Officer", "Manage incidents, compliance, and safety", new List<string> { "safety-compliance:all", "command-center:read" }, false),
+                ("Client Manager", "Manage clients and their access", new List<string> { "settings:clients", "command-center:read" }, false),
+            };
+            foreach (var (name, desc, perms, isSys) in rolePerms)
+            {
+                if (!existingRoleNames.Contains(name))
+                {
+                    rolesToAdd.Add(new Role { Id = Guid.NewGuid(), TenantId = tid, Name = name, Description = desc, Permissions = perms, IsSystemRole = isSys, CreatedAt = DateTime.UtcNow });
+                }
+            }
+            if (rolesToAdd.Any())
+            {
+                context.Roles.AddRange(rolesToAdd);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"[Seed]   Roles: {rolesToAdd.Count} new roles added");
+
+                // Seed form-role mappings for new roles
+                var forms = await context.FormMasters.ToListAsync();
+                var allRoles = await context.Roles.Where(r => r.TenantId == tid).ToListAsync();
+                var dispatcherRole = allRoles.FirstOrDefault(r => r.Name == "Dispatcher");
+                var managerRole = allRoles.FirstOrDefault(r => r.Name == "Manager");
+                var viewerRole = allRoles.FirstOrDefault(r => r.Name == "Viewer");
+                var existingMappings = await context.FormRoleMappings.Where(m => m.TenantId == tid).ToListAsync();
+                var existingPairs = new HashSet<string>(existingMappings.Select(m => m.RoleId.ToString() + "_" + m.FormId.ToString()));
+                var newMappings = new List<FormRoleMapping>();
+                if (dispatcherRole != null)
+                {
+                    var dispForms = forms.Where(f => new[] { "Operations Overview", "Live Fleet Map", "Vehicle Directory", "Driver Hub", "Route Management", "Geofence Management", "Active Deliveries", "Command Center" }.Contains(f.FormName)).ToList();
+                    foreach (var f in dispForms)
+                    {
+                        if (!existingPairs.Contains(dispatcherRole.Id.ToString() + "_" + f.Id.ToString()))
+                            newMappings.Add(new FormRoleMapping { Id = Guid.NewGuid(), TenantId = tid, RoleId = dispatcherRole.Id, FormId = f.Id, CanView = true, CanAdd = true, CanEdit = true, CanDelete = false, CreatedAt = DateTime.UtcNow });
+                    }
+                }
+                if (managerRole != null)
+                {
+                    var mgrForms = forms.Where(f => new[] { "Operations Overview", "Live Fleet Map", "Vehicle Directory", "Driver Hub", "Fuel Analytics", "Maintenance Studio", "Route Management", "Geofence Management", "Active Deliveries", "Incident Center", "Insight Builder", "Command Center", "Client Management", "Device Fleet" }.Contains(f.FormName)).ToList();
+                    foreach (var f in mgrForms)
+                    {
+                        if (!existingPairs.Contains(managerRole.Id.ToString() + "_" + f.Id.ToString()))
+                            newMappings.Add(new FormRoleMapping { Id = Guid.NewGuid(), TenantId = tid, RoleId = managerRole.Id, FormId = f.Id, CanView = true, CanAdd = false, CanEdit = true, CanDelete = false, CreatedAt = DateTime.UtcNow });
+                    }
+                }
+                if (viewerRole != null)
+                {
+                    var viewForms = forms.Where(f => new[] { "Operations Overview", "Live Fleet Map", "Vehicle Directory", "Insight Builder", "Command Center" }.Contains(f.FormName)).ToList();
+                    foreach (var f in viewForms)
+                    {
+                        if (!existingPairs.Contains(viewerRole.Id.ToString() + "_" + f.Id.ToString()))
+                            newMappings.Add(new FormRoleMapping { Id = Guid.NewGuid(), TenantId = tid, RoleId = viewerRole.Id, FormId = f.Id, CanView = true, CanAdd = false, CanEdit = false, CanDelete = false, CreatedAt = DateTime.UtcNow });
+                    }
+                }
+                if (newMappings.Any())
+                {
+                    context.FormRoleMappings.AddRange(newMappings);
+                    await context.SaveChangesAsync();
+                    Console.WriteLine($"[Seed]   FormRoleMappings: {newMappings.Count} mappings added");
+                }
+            }
+        }
+
         Console.WriteLine("[Seed] ✅ New tables seeded");
     }
 }
