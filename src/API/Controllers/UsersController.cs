@@ -177,7 +177,55 @@ public class UsersController : ControllerBase
     {
         var tenantId = GetCurrentTenantId();
         var roles = await _roleRepository.FindAsync(r => r.TenantId == tenantId);
-        return Ok(roles.Select(r => new { r.Id, r.Name, r.Permissions, r.IsSystemRole }));
+        return Ok(roles.Select(r => new { r.Id, r.Name, r.Description, r.Permissions, r.IsSystemRole }));
+    }
+
+    [HttpPost("roles")]
+    [Authorize(Roles = "Super Admin,Admin")]
+    public async Task<IActionResult> CreateRole([FromBody] CreateRoleRequest request)
+    {
+        var tenantId = GetCurrentTenantId();
+        var role = new Role
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Name = request.Name,
+            Description = request.Description,
+            Permissions = request.Permissions ?? new List<string>(),
+            IsSystemRole = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        await _roleRepository.AddAsync(role);
+        return Ok(new { role.Id, role.Name, role.Description, message = "Role created successfully" });
+    }
+
+    [HttpPut("roles/{id:guid}")]
+    [Authorize(Roles = "Super Admin,Admin")]
+    public async Task<IActionResult> UpdateRole(Guid id, [FromBody] UpdateRoleRequest request)
+    {
+        var tenantId = GetCurrentTenantId();
+        var roles = await _roleRepository.FindAsync(r => r.Id == id && r.TenantId == tenantId);
+        var role = roles.FirstOrDefault();
+        if (role == null) return NotFound(new { title = "Role not found" });
+        if (role.IsSystemRole) return BadRequest(new { title = "Cannot modify system roles" });
+        role.Name = request.Name ?? role.Name;
+        role.Description = request.Description ?? role.Description;
+        role.Permissions = request.Permissions ?? role.Permissions;
+        await _roleRepository.UpdateAsync(role);
+        return Ok(new { message = "Role updated successfully" });
+    }
+
+    [HttpDelete("roles/{id:guid}")]
+    [Authorize(Roles = "Super Admin,Admin")]
+    public async Task<IActionResult> DeleteRole(Guid id)
+    {
+        var tenantId = GetCurrentTenantId();
+        var roles = await _roleRepository.FindAsync(r => r.Id == id && r.TenantId == tenantId);
+        var role = roles.FirstOrDefault();
+        if (role == null) return NotFound(new { title = "Role not found" });
+        if (role.IsSystemRole) return BadRequest(new { title = "Cannot delete system roles" });
+        await _roleRepository.DeleteAsync(role);
+        return Ok(new { message = "Role deleted successfully" });
     }
 
     [HttpPost("{id:guid}/reset-password")]
@@ -233,4 +281,18 @@ public class UpdateUserRequest
 public class ResetPasswordRequest
 {
     public string NewPassword { get; set; } = "";
+}
+
+public class CreateRoleRequest
+{
+    public string Name { get; set; } = "";
+    public string? Description { get; set; }
+    public List<string>? Permissions { get; set; }
+}
+
+public class UpdateRoleRequest
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public List<string>? Permissions { get; set; }
 }

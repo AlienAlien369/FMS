@@ -130,6 +130,7 @@ public class ClientsController : ControllerBase
             ConsigneeCategoryId = client.ConsigneeCategoryId,
             IsContractSigned = client.IsContractSigned,
             IsActive = client.IsActive,
+            RoleId = client.RoleId,
             ParentClientId = client.ParentClientId,
             CreatedAt = client.CreatedAt
         });
@@ -181,6 +182,7 @@ public class ClientsController : ControllerBase
             ConsigneeCategoryId = request.ConsigneeCategoryId,
             IsContractSigned = request.IsContractSigned,
             IsActive = true,
+            RoleId = request.RoleId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -228,6 +230,7 @@ public class ClientsController : ControllerBase
         if (request.ConsigneeCategoryId.HasValue) client.ConsigneeCategoryId = request.ConsigneeCategoryId;
         if (request.IsContractSigned.HasValue) client.IsContractSigned = request.IsContractSigned.Value;
         if (request.IsActive.HasValue) client.IsActive = request.IsActive.Value;
+        if (request.RoleId.HasValue) client.RoleId = request.RoleId;
 
         client.UpdatedAt = DateTime.UtcNow;
         await _clientRepository.UpdateAsync(client);
@@ -284,6 +287,8 @@ public class ClientDto
     public Guid? ConsigneeCategoryId { get; set; }
     public bool IsContractSigned { get; set; }
     public bool IsActive { get; set; }
+    public Guid? RoleId { get; set; }
+    public string? RoleName { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -319,6 +324,7 @@ public class CreateClientRequest
     public string? CinNo { get; set; }
     public Guid? ConsigneeCategoryId { get; set; }
     public bool IsContractSigned { get; set; }
+    public Guid? RoleId { get; set; }
 }
 
 public class UpdateClientRequest
@@ -354,4 +360,5 @@ public class UpdateClientRequest
     public Guid? ConsigneeCategoryId { get; set; }
     public bool? IsContractSigned { get; set; }
     public bool? IsActive { get; set; }
+    public Guid? RoleId { get; set; }
 }

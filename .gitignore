@@ -65,3 +65,5 @@ redis-data/
 *.tfstate.backup
 .terraform/
 .env.production
+
+.vercel
